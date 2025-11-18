@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Forest Tracker</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="dark">
+  <%- include('partials/header', { currentPath: '/login' }) %>
+  
+  <main class="flex-1">
+<div class="relative min-h-screen bg-light-surface">
+  <div class="relative pt-32 pb-20 px-4">
+    <div class="container mx-auto max-w-md">
+      <div class="section-header mb-8">
+        <h1 class="section-title">Sign In</h1>
+        <p class="section-description">
+          Access your Forest Tracker account to manage resources and view analytics.
+        </p>
+      </div>
+
+      <div class="resource-card">
+        <form id="loginForm" class="space-y-6">
+          <div id="errorMessage" class="hidden p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+            <p class="text-sm text-red-400" id="errorText"></p>
+          </div>
+
+          <div class="form-group">
+            <label for="username" class="label">Username</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              class="input"
+              placeholder="Enter your username"
+              required
+              autocomplete="username"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="password" class="label">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="input"
+              placeholder="Enter your password"
+              required
+              autocomplete="current-password"
+            />
+          </div>
+
+          <div class="flex items-center justify-between text-sm">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="remember" name="remember" class="rounded border-border">
+              <span class="text-muted-foreground">Remember me</span>
+            </label>
+            <a href="#" class="text-forest-primary hover:text-forest-accent transition-colors">
+              Forgot password?
+            </a>
+          </div>
+
+          <button
+            type="submit"
+            id="submitBtn"
+            class="btn btn-primary btn-lg w-full"
+          >
+            <span id="submitText">Sign In</span>
+            <span id="submitSpinner" class="hidden">
+              <span class="spinner"></span>
+              Signing in...
+            </span>
+          </button>
+        </form>
+
+        <div class="mt-6 pt-6 border-t border-border text-center">
+          <p class="text-sm text-muted-foreground">
+            Don't have an account? 
+            <a href="/" class="text-forest-primary hover:text-forest-accent transition-colors font-medium">
+              Contact us
+            </a>
+          </p>
+        </div>
+      </div>
+
+      <!-- Demo Credentials Info -->
+      <div class="mt-6 p-4 bg-forest-primary/5 border border-forest-primary/20 rounded-lg">
+        <p class="text-xs text-muted-foreground text-center">
+          <strong class="text-foreground">Demo Accounts:</strong><br>
+          Username: <code class="text-forest-primary">admin</code> or <code class="text-forest-primary">researcher</code>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+  </main>
+  
+  <%- include('partials/footer') %>
+  
+  <script src="/js/forest-background.js"></script>
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById('submitBtn');
+      const submitText = document.getElementById('submitText');
+      const submitSpinner = document.getElementById('submitSpinner');
+      const errorMessage = document.getElementById('errorMessage');
+      const errorText = document.getElementById('errorText');
+      
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const remember = document.getElementById('remember').checked;
+
+      // Show loading state
+      submitBtn.disabled = true;
+      submitText.classList.add('hidden');
+      submitSpinner.classList.remove('hidden');
+      errorMessage.classList.add('hidden');
+
+      try {
+        const response = await fetch('http://127.0.0.1:5000/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.token) {
+          // Store token in localStorage
+          localStorage.setItem('authToken', data.token);
+          localStorage.setItem('username', username);
+          
+          if (remember) {
+            // Store remember preference
+            localStorage.setItem('rememberMe', 'true');
+          }
+
+          // Show success and redirect
+          submitText.textContent = 'Success! Redirecting...';
+          submitSpinner.classList.add('hidden');
+          submitText.classList.remove('hidden');
+          
+          // Reload page to get the cookie set by server, then redirect
+          setTimeout(() => {
+            // Redirect to dashboard or previous page
+            const redirectTo = new URLSearchParams(window.location.search).get('redirect') || '/dashboard';
+            window.location.href = redirectTo;
+          }, 1000);
+        } else {
+          // Show error
+          errorText.textContent = data.error || 'Login failed. Please check your credentials.';
+          errorMessage.classList.remove('hidden');
+          submitBtn.disabled = false;
+          submitText.classList.remove('hidden');
+          submitSpinner.classList.add('hidden');
+        }
+      } catch (error) {
+        errorText.textContent = 'Network error. Please try again later.';
+        errorMessage.classList.remove('hidden');
+        submitBtn.disabled = false;
+        submitText.classList.remove('hidden');
+        submitSpinner.classList.add('hidden');
+      }
+    });
+
+    // Check if user is already logged in
+    if (localStorage.getItem('authToken')) {
+      // Optionally redirect or show logged in state
+    }
+  </script>
+</body>
+</html>
+

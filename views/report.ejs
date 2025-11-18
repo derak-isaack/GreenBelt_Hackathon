@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'Forest Tracker' %></title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="dark">
+  <%- include('partials/header', { currentPath: typeof currentPath !== 'undefined' ? currentPath : '/' }) %>
+  
+  <main class="flex-1">
+<div class="relative min-h-screen bg-light-surface">
+  <div class="relative pt-32 pb-20 px-4">
+    <div class="container mx-auto max-w-3xl">
+      <div class="section-header mb-12">
+        <div class="inline-flex items-center gap-2 px-4 py-2 bg-forest-accent/10 rounded-full border border-forest-accent/20 mb-4">
+          <svg class="h-4 w-4 text-forest-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+          </svg>
+          <span class="text-sm font-medium text-forest-accent">Anonymous & Secure</span>
+        </div>
+        <h1 class="section-title">Report <span class="text-forest-primary">Encroachment</span></h1>
+        <p class="section-description">
+          Help us protect our forests by reporting illegal activities. Your identity will remain completely anonymous.
+        </p>
+      </div>
+
+      <div class="resource-card">
+        <div class="card-header">
+          <h2 class="card-title flex items-center gap-2">
+            <svg class="h-5 w-5 text-forest-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            Submit Anonymous Report
+          </h2>
+          <p class="card-description">
+            Provide as much detail as possible to help us investigate and take appropriate action.
+          </p>
+        </div>
+        <div class="card-content">
+          <div id="successMessage" class="hidden py-12 text-center space-y-4">
+            <svg class="h-16 w-16 text-forest-primary mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <h3 class="text-2xl font-semibold text-foreground">Report Submitted Successfully</h3>
+            <p class="text-muted-foreground">
+              Thank you for helping protect our forests. Your report has been received and will be reviewed by our team.
+            </p>
+          </div>
+
+          <form id="reportForm" class="space-y-6">
+            <div class="form-group">
+              <label for="location" class="label">Location *</label>
+              <input
+                type="text"
+                id="location"
+                name="location"
+                class="input"
+                placeholder="e.g., Amazon Rainforest, Sector 7, GPS: -3.4653, -62.2159"
+                required
+              />
+              <p class="text-xs text-muted-foreground mt-1">
+                Provide specific location details, coordinates, or landmarks
+              </p>
+            </div>
+
+            <div class="form-group">
+              <label for="details" class="label">Incident Details *</label>
+              <textarea
+                id="details"
+                name="incidentDetails"
+                class="textarea"
+                placeholder="Describe what you observed: type of activity, number of people involved, equipment used, date and time, etc."
+                required
+                rows="8"
+              ></textarea>
+              <p class="text-xs text-muted-foreground mt-1">
+                Include as much detail as possible to help our investigation
+              </p>
+            </div>
+
+            <div class="bg-forest-primary/5 border border-forest-primary/20 rounded-lg p-4">
+              <div class="flex gap-3">
+                <svg class="h-5 w-5 text-forest-primary flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                </svg>
+                <div class="text-sm text-muted-foreground">
+                  <strong class="text-foreground">Your privacy is protected:</strong> This report is completely anonymous. 
+                  We do not collect any identifying information about you.
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              id="submitBtn"
+              class="btn btn-primary btn-lg w-full"
+            >
+              <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+              </svg>
+              Submit Report
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('reportForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('submitBtn');
+    const form = document.getElementById('reportForm');
+    const successMessage = document.getElementById('successMessage');
+    
+    const formData = {
+      location: document.getElementById('location').value,
+      incidentDetails: document.getElementById('details').value,
+    };
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner"></span> Submitting Report...';
+
+    try {
+      const response = await fetch('/api/whistle/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        form.classList.add('hidden');
+        successMessage.classList.remove('hidden');
+        form.reset();
+        
+        setTimeout(() => {
+          form.classList.remove('hidden');
+          successMessage.classList.add('hidden');
+        }, 5000);
+      } else {
+        alert('Error: ' + (data.error || 'Failed to submit report'));
+      }
+    } catch (error) {
+      alert('Error: ' + error.message);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>Submit Report';
+    }
+  });
+</script>
+  </main>
+  
+  <%- include('partials/footer') %>
+  
+  <script src="/js/forest-background.js"></script>
+</body>
+</html>
+

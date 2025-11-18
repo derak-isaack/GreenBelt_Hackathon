@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'Forest Tracker' %></title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="dark">
+  <%- include('partials/header', { currentPath: typeof currentPath !== 'undefined' ? currentPath : '/' }) %>
+  
+  <main class="flex-1">
+<div class="relative min-h-screen bg-light-surface">
+  <div class="relative pt-32 pb-20 px-4">
+    <div class="container mx-auto max-w-7xl">
+      <div class="section-header mb-12">
+        <h1 class="section-title">Analytics <span class="text-forest-primary">Dashboard</span></h1>
+        <p class="section-description">
+          Real-time monitoring of forest health, encroachment levels, and conservation metrics.
+        </p>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="grid md:grid-cols-3 gap-6 mb-8">
+        <div class="stat-card">
+          <p class="card-description mb-2">Total Reports</p>
+          <div class="stat-value" id="totalReports">-</div>
+          <div class="stat-label">Anonymous submissions received</div>
+        </div>
+
+        <div class="stat-card">
+          <p class="card-description mb-2">Monitored Areas</p>
+          <div class="stat-value" id="monitoredAreas">-</div>
+          <div class="stat-label">Active monitoring locations</div>
+        </div>
+
+        <div class="stat-card">
+          <p class="card-description mb-2">Avg. Forest Health</p>
+          <div class="stat-value" id="avgHealth">-</div>
+          <div class="stat-label">Overall ecosystem health score</div>
+        </div>
+      </div>
+
+      <!-- Dashboard Data -->
+      <div class="space-y-6 mb-8">
+        <h2 class="text-2xl font-bold text-foreground flex items-center gap-2">
+          <svg class="h-6 w-6 text-forest-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+          </svg>
+          Forest Monitoring Data
+        </h2>
+
+        <div id="dashboardData" class="grid md:grid-cols-2 gap-6">
+          <div class="text-center py-12">
+            <span class="spinner"></span>
+            <p class="text-muted-foreground mt-4">Loading data...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Reports -->
+      <div class="space-y-6">
+        <h2 class="text-2xl font-bold text-foreground flex items-center gap-2">
+          <svg class="h-6 w-6 text-forest-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+          </svg>
+          Recent Reports
+        </h2>
+
+        <div id="reportsList" class="space-y-4">
+          <div class="text-center py-12">
+            <span class="spinner"></span>
+            <p class="text-muted-foreground mt-4">Loading reports...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function getHealthStatus(health) {
+    if (health >= 80) return { label: 'Excellent', color: 'bg-green-500/20 text-green-600 border-green-500/30' };
+    if (health >= 60) return { label: 'Good', color: 'bg-forest-primary/20 text-forest-primary border-forest-primary/30' };
+    if (health >= 40) return { label: 'Fair', color: 'bg-yellow-500/20 text-yellow-600 border-yellow-500/30' };
+    return { label: 'Critical', color: 'bg-red-500/20 text-red-600 border-red-500/30' };
+  }
+
+  function getEncroachmentLevel(level) {
+    if (level >= 70) return { label: 'High', color: 'bg-red-500/20 text-red-600 border-red-500/30' };
+    if (level >= 40) return { label: 'Medium', color: 'bg-yellow-500/20 text-yellow-600 border-yellow-500/30' };
+    return { label: 'Low', color: 'bg-green-500/20 text-green-600 border-green-500/30' };
+  }
+
+  async function loadDashboard() {
+    try {
+      // Load dashboard data
+      const dashboardResponse = await fetch('/api/dashboard/data');
+      const dashboardData = await dashboardResponse.json();
+      
+      // Load reports
+      const reportsResponse = await fetch('/api/whistle/reports');
+      const reports = await reportsResponse.json();
+
+      // Update summary cards
+      document.getElementById('totalReports').textContent = reports.length || 0;
+      document.getElementById('monitoredAreas').textContent = dashboardData.length || 0;
+      
+      if (dashboardData.length > 0) {
+        const avgHealth = Math.round(
+          dashboardData.reduce((acc, d) => acc + Number(d.forestHealth || 0), 0) / dashboardData.length
+        );
+        document.getElementById('avgHealth').textContent = avgHealth + '%';
+      } else {
+        document.getElementById('avgHealth').textContent = 'N/A';
+      }
+
+      // Render dashboard data
+      const dashboardContainer = document.getElementById('dashboardData');
+      if (dashboardData.length > 0) {
+        dashboardContainer.innerHTML = dashboardData.map((data, index) => {
+          const healthStatus = getHealthStatus(Number(data.forestHealth || 0));
+          const encroachmentInfo = getEncroachmentLevel(Number(data.encroachmentLevel || 0));
+          
+          return \`
+            <div class="card bg-card/80 backdrop-blur-sm border-forest-border hover:border-forest-primary/50 transition-all duration-300">
+              <div class="card-header">
+                <div class="flex items-start justify-between">
+                  <h3 class="card-title text-lg">Monitoring Area #\${index + 1}</h3>
+                  <span class="badge \${healthStatus.color}">\${healthStatus.label}</span>
+                </div>
+              </div>
+              <div class="space-y-4">
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-muted-foreground">Forest Health</span>
+                    <span class="text-lg font-semibold text-foreground">\${data.forestHealth || 0}%</span>
+                  </div>
+                  <div class="w-full bg-muted rounded-full h-2">
+                    <div class="bg-forest-primary h-2 rounded-full transition-all duration-500" style="width: \${data.forestHealth || 0}%"></div>
+                  </div>
+                </div>
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-muted-foreground">Encroachment Level</span>
+                    <span class="badge \${encroachmentInfo.color}">\${encroachmentInfo.label}</span>
+                    <span class="text-lg font-semibold text-foreground">\${data.encroachmentLevel || 0}%</span>
+                  </div>
+                  <div class="w-full bg-muted rounded-full h-2">
+                    <div class="bg-forest-accent h-2 rounded-full transition-all duration-500" style="width: \${data.encroachmentLevel || 0}%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          \`;
+        }).join('');
+      } else {
+        dashboardContainer.innerHTML = \`
+          <div class="card bg-card/80 backdrop-blur-sm border-forest-border">
+            <div class="py-12 text-center">
+              <svg class="h-12 w-12 text-muted-foreground mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              </svg>
+              <p class="text-lg text-muted-foreground">No monitoring data available yet.</p>
+            </div>
+          </div>
+        \`;
+      }
+
+      // Render reports
+      const reportsContainer = document.getElementById('reportsList');
+      if (reports.length > 0) {
+        reportsContainer.innerHTML = reports.slice(0, 10).map(report => {
+          const date = new Date(Number(report.timestamp) / 1000000);
+          return \`
+            <div class="card bg-card/80 backdrop-blur-sm border-forest-border hover:border-forest-primary/50 transition-all duration-300">
+              <div class="py-4">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div class="flex-1 space-y-2">
+                    <div class="flex items-center gap-2">
+                      <svg class="h-4 w-4 text-forest-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                      </svg>
+                      <span class="font-medium text-foreground">\${report.location || 'Unknown'}</span>
+                    </div>
+                    <p class="text-sm text-muted-foreground line-clamp-2">\${report.incidentDetails || report.report || ''}</p>
+                  </div>
+                  <div class="text-xs text-muted-foreground whitespace-nowrap">
+                    \${date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          \`;
+        }).join('');
+      } else {
+        reportsContainer.innerHTML = \`
+          <div class="card bg-card/80 backdrop-blur-sm border-forest-border">
+            <div class="py-12 text-center">
+              <svg class="h-12 w-12 text-muted-foreground mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+              </svg>
+              <p class="text-lg text-muted-foreground">No reports submitted yet.</p>
+            </div>
+          </div>
+        \`;
+      }
+    } catch (error) {
+      console.error('Error loading dashboard:', error);
+      document.getElementById('dashboardData').innerHTML = \`
+        <div class="card bg-card/80 backdrop-blur-sm border-forest-border">
+          <div class="py-12 text-center">
+            <p class="text-lg text-muted-foreground">Error loading data. Please try again later.</p>
+          </div>
+        </div>
+      \`;
+    }
+  }
+
+  // Load dashboard on page load
+  loadDashboard();
+  
+  // Refresh every 30 seconds
+  setInterval(loadDashboard, 30000);
+</script>
+  </main>
+  
+  <%- include('partials/footer') %>
+  
+  <script src="/js/forest-background.js"></script>
+  <script>
+    // Check authentication on page load
+    (function() {
+      const authToken = localStorage.getItem('authToken');
+      const sessionId = document.cookie.split('; ').find(row => row.startsWith('sessionId='));
+      
+      if (!authToken && !sessionId) {
+        // No authentication, redirect to login
+        const currentPath = window.location.pathname;
+        window.location.href = '/login?redirect=' + encodeURIComponent(currentPath);
+        return;
+      }
+    })();
+  </script>
+</body>
+</html>
+

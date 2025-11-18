@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'Forest Tracker' %></title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="dark">
+  <%- include('partials/header', { currentPath: typeof currentPath !== 'undefined' ? currentPath : '/' }) %>
+  
+  <main class="flex-1">
+    <%- body %>
+  </main>
+  
+  <%- include('partials/footer') %>
+  
+  <script src="/js/forest-background.js"></script>
+</body>
+</html>
+

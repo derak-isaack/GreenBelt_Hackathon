@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'Forest Tracker' %></title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="dark">
+  <%- include('partials/header', { currentPath: typeof currentPath !== 'undefined' ? currentPath : '/' }) %>
+  
+  <main class="flex-1">
+<div class="relative min-h-screen landing-background">
+  <div class="relative pt-32 pb-20 px-4">
+    <div class="container mx-auto max-w-7xl">
+      
+      <!-- Hero Card - Large rounded card like PlantVillage -->
+      <div class="hero-card mb-16">
+        <div class="hero-card-content">
+          <div class="hero-text">
+            <h1 class="hero-title">
+              We help protect and monitor forests across Africa, Asia and the Americas
+            </h1>
+            <p class="hero-subtitle">
+              Monitor, report, and prevent forest encroachment. Join us in protecting our planet's vital ecosystems for future generations.
+            </p>
+            <div class="hero-actions">
+              <a href="/report" class="btn btn-primary btn-lg">
+                <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                Report Encroachment
+              </a>
+              <a href="/dashboard" class="btn btn-outline btn-lg">
+                <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                View Dashboard
+              </a>
+            </div>
+          </div>
+          <div class="hero-image">
+            <div class="hero-image-placeholder">
+              <svg class="hero-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Cards Section -->
+      <div class="section-header mb-8">
+        <h2 class="section-title">Our Services</h2>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6">
+        <!-- Resources Card -->
+        <div class="feature-card" onclick="window.location.href='/resources'">
+          <div class="feature-card-icon">
+            <svg class="h-12 w-12 text-forest-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
+          </div>
+          <h3 class="feature-card-title">Resources</h3>
+          <p class="feature-card-description">
+            Access educational content, policies, and downloadable materials about forest conservation.
+          </p>
+        </div>
+
+        <!-- Report Card -->
+        <div class="feature-card" onclick="window.location.href='/report'">
+          <div class="feature-card-icon">
+            <svg class="h-12 w-12 text-forest-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+          </div>
+          <h3 class="feature-card-title">Report Encroachment</h3>
+          <p class="feature-card-description">
+            Anonymously report forest encroachments and illegal activities to help protect our forests.
+          </p>
+        </div>
+
+        <!-- Dashboard Card -->
+        <div class="feature-card" onclick="window.location.href='/dashboard'">
+          <div class="feature-card-icon">
+            <svg class="h-12 w-12 text-forest-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+          </div>
+          <h3 class="feature-card-title">Dashboard</h3>
+          <p class="feature-card-description">
+            View analytics, visualizations, and real-time data on forest health and encroachment levels.
+          </p>
+        </div>
+      </div>
+
+      <!-- Stats Section -->
+      <div class="stats-section mt-16">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div class="stat-card">
+            <svg class="h-8 w-8 text-forest-primary mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+            </svg>
+            <div class="stat-value">1,200+</div>
+            <div class="stat-label">Forests Monitored</div>
+          </div>
+          <div class="stat-card">
+            <svg class="h-8 w-8 text-forest-primary mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+            <div class="stat-value">3,450+</div>
+            <div class="stat-label">Reports Submitted</div>
+          </div>
+          <div class="stat-card">
+            <svg class="h-8 w-8 text-forest-primary mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+            </svg>
+            <div class="stat-value">50K+</div>
+            <div class="stat-label">Hectares Protected</div>
+          </div>
+          <div class="stat-card">
+            <svg class="h-8 w-8 text-forest-primary mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <div class="stat-value">127</div>
+            <div class="stat-label">Active Alerts</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+  </main>
+  
+  <%- include('partials/footer') %>
+  
+  <script src="/js/forest-background.js"></script>
+</body>
+</html>
