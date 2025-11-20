@@ -27,25 +27,26 @@ def save_report(data):
 
 @whistle_bp.route("/submit", methods=["POST"])
 def submit_report():
-    """
-    Anonymous Whistleblower Submission Endpoint.
-    No login required.
-    """
     payload = request.get_json()
 
     if not payload:
         return jsonify({"error": "Missing report payload"}), 400
 
     report_text = payload.get("report", "")
-    attachments = payload.get("attachments", [])  
+    attachments = payload.get("attachments", [])
+    forest = payload.get("forest")  # NEW FIELD
 
     if not report_text:
         return jsonify({"error": "Report text is required"}), 400
+
+    if not forest:
+        return jsonify({"error": "Forest name is required"}), 400
 
     report_data = {
         "id": str(uuid.uuid4()),
         "report": report_text,
         "attachments": attachments,
+        "forest": forest,   # SAVE HERE
         "timestamp": datetime.datetime.utcnow().isoformat(),
         "status": "received"
     }
