@@ -100,6 +100,8 @@
   <%- include('partials/footer') %>
   
   <script src="/js/forest-background.js"></script>
+
+  <!-- ===== UPDATED LOGIN LOGIC BELOW ===== -->
   <script>
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -114,7 +116,6 @@
       const password = document.getElementById('password').value;
       const remember = document.getElementById('remember').checked;
 
-      // Show loading state
       submitBtn.disabled = true;
       submitText.classList.add('hidden');
       submitSpinner.classList.remove('hidden');
@@ -123,43 +124,43 @@
       try {
         const response = await fetch('http://127.0.0.1:5000/auth/login', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ username, password }),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
         });
 
         const data = await response.json();
 
         if (response.ok && data.token) {
-          // Store token in localStorage
+          // Store token + role
           localStorage.setItem('authToken', data.token);
           localStorage.setItem('username', username);
-          
+          localStorage.setItem('role', data.role || '');
+
           if (remember) {
-            // Store remember preference
             localStorage.setItem('rememberMe', 'true');
           }
 
-          // Show success and redirect
           submitText.textContent = 'Success! Redirecting...';
           submitSpinner.classList.add('hidden');
           submitText.classList.remove('hidden');
-          
-          // Reload page to get the cookie set by server, then redirect
+
+          // Redirect admin to dashboard
           setTimeout(() => {
-            // Redirect to dashboard or previous page
-            const redirectTo = new URLSearchParams(window.location.search).get('redirect') || '/dashboard';
-            window.location.href = redirectTo;
+            if (data.role === 'admin') {
+              window.location.href = '/dashboard';
+            } else {
+              window.location.href = '/';
+            }
           }, 1000);
+
         } else {
-          // Show error
           errorText.textContent = data.error || 'Login failed. Please check your credentials.';
           errorMessage.classList.remove('hidden');
           submitBtn.disabled = false;
           submitText.classList.remove('hidden');
           submitSpinner.classList.add('hidden');
         }
+
       } catch (error) {
         errorText.textContent = 'Network error. Please try again later.';
         errorMessage.classList.remove('hidden');
@@ -169,11 +170,11 @@
       }
     });
 
-    // Check if user is already logged in
-    if (localStorage.getItem('authToken')) {
-      // Optionally redirect or show logged in state
+    // If user already logged in, optionally redirect admin immediately
+    const savedRole = localStorage.getItem('role');
+    if (localStorage.getItem('authToken') && savedRole === 'admin') {
+      window.location.href = '/dashboard';
     }
   </script>
 </body>
 </html>
-
