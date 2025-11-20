@@ -6,17 +6,29 @@
         <span class="text-xl font-bold text-forest-primary">Forest Tracker</span>
       </a>
 
-      <nav class="hidden md:flex items-center gap-6 ml-auto">
-        <a href="/" class="text-sm font-medium text-foreground/80 hover:text-forest-primary transition-colors <%= currentPath === '/' ? 'text-forest-primary' : '' %>">Home</a>
-        <a href="/dashboard" class="text-sm font-medium text-foreground/80 hover:text-forest-primary transition-colors <%= currentPath === '/dashboard' ? 'text-forest-primary' : '' %>">Dashboard</a>
-        <a href="/resources" class="text-sm font-medium text-foreground/80 hover:text-forest-primary transition-colors <%= currentPath === '/resources' ? 'text-forest-primary' : '' %>">Resources</a>
-        <a href="/report" class="text-sm font-medium text-foreground/80 hover:text-forest-primary transition-colors <%= currentPath === '/report' ? 'text-forest-primary' : '' %>">Report</a>
-        <button type="button" id="loginBtn" class="btn btn-primary">
-          <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-          </svg>
-          Login
-        </button>
+      <nav class="hidden md:flex ml-auto">
+        <ul class="nav-list">
+          <li>
+            <a href="/" class="text-sm font-medium text-foreground/80 hover:text-forest-primary transition-colors <%= currentPath === '/' ? 'text-forest-primary' : '' %>">Home</a>
+          </li>
+          <li>
+            <a href="/dashboard" class="text-sm font-medium text-foreground/80 hover:text-forest-primary transition-colors <%= currentPath === '/dashboard' ? 'text-forest-primary' : '' %>">Dashboard</a>
+          </li>
+          <li>
+            <a href="/resources" class="text-sm font-medium text-foreground/80 hover:text-forest-primary transition-colors <%= currentPath === '/resources' ? 'text-forest-primary' : '' %>">Resources</a>
+          </li>
+          <li>
+            <a href="/report" class="text-sm font-medium text-foreground/80 hover:text-forest-primary transition-colors <%= currentPath === '/report' ? 'text-forest-primary' : '' %>">Report</a>
+          </li>
+          <li>
+            <button type="button" id="loginBtn" class="btn btn-primary">
+              <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+              </svg>
+              Login
+            </button>
+          </li>
+        </ul>
       </nav>
 
       <!-- Mobile Menu Button -->
@@ -31,17 +43,29 @@
     </div>
 
     <!-- Mobile Navigation -->
-    <nav id="mobileMenu" class="md:hidden hidden mt-4 pb-4 flex flex-col gap-3">
-      <a href="/" class="text-sm font-medium text-foreground/80 hover:text-forest-primary transition-colors py-2 <%= currentPath === '/' ? 'text-forest-primary' : '' %>">Home</a>
-      <a href="/dashboard" class="text-sm font-medium text-foreground/80 hover:text-forest-primary transition-colors py-2 <%= currentPath === '/dashboard' ? 'text-forest-primary' : '' %>">Dashboard</a>
-      <a href="/resources" class="text-sm font-medium text-foreground/80 hover:text-forest-primary transition-colors py-2 <%= currentPath === '/resources' ? 'text-forest-primary' : '' %>">Resources</a>
-      <a href="/report" class="text-sm font-medium text-foreground/80 hover:text-forest-primary transition-colors py-2 <%= currentPath === '/report' ? 'text-forest-primary' : '' %>">Report</a>
-      <button type="button" id="mobileLoginBtn" class="btn btn-primary w-full mt-2">
-        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-        </svg>
-        Login
-      </button>
+    <nav id="mobileMenu" class="md:hidden hidden mt-4 pb-4">
+      <ul class="nav-list nav-list-vertical">
+        <li>
+          <a href="/" class="text-sm font-medium text-foreground/80 hover:text-forest-primary transition-colors py-2 <%= currentPath === '/' ? 'text-forest-primary' : '' %>">Home</a>
+        </li>
+        <li>
+          <a href="/dashboard" class="text-sm font-medium text-foreground/80 hover:text-forest-primary transition-colors py-2 <%= currentPath === '/dashboard' ? 'text-forest-primary' : '' %>">Dashboard</a>
+        </li>
+        <li>
+          <a href="/resources" class="text-sm font-medium text-foreground/80 hover:text-forest-primary transition-colors py-2 <%= currentPath === '/resources' ? 'text-forest-primary' : '' %>">Resources</a>
+        </li>
+        <li>
+          <a href="/report" class="text-sm font-medium text-foreground/80 hover:text-forest-primary transition-colors py-2 <%= currentPath === '/report' ? 'text-forest-primary' : '' %>">Report</a>
+        </li>
+        <li class="w-full">
+          <button type="button" id="mobileLoginBtn" class="btn btn-primary w-full">
+            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>
+            Login
+          </button>
+        </li>
+      </ul>
     </nav>
   </div>
 </header>

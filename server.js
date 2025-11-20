@@ -95,9 +95,10 @@ function requireAuth(req, res, next) {
   const sessionId = req.cookies.sessionId;
   if (sessionId && sessions[sessionId]) {
     req.user = sessions[sessionId].user;
+    req.role = sessions[sessionId].role;
     return next();
   }
-  
+
   // If no session, redirect to login with redirect parameter
   const redirectUrl = req.originalUrl;
   res.redirect(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
@@ -178,6 +179,15 @@ app.get('/api/dashboard/data', async (req, res) => {
   res.json(dashboardData);
 });
 
+app.get('/api/ndvi/trend', async (req, res) => {
+  const result = await makeBackendRequest('GET', '/ndvi/api/ndvi/trend');
+  if (result.success) {
+    res.json(result.data);
+  } else {
+    res.status(result.status).json({ error: result.error });
+  }
+});
+
 app.get('/api/whistle/reports', async (req, res) => {
   // Read from the JSON file that Flask writes to
   const fs = require('fs');
@@ -223,6 +233,33 @@ app.get('/api/evaluate', async (req, res) => {
 // Frontend Routes
 // ===================
 
+app.post('/login', async (req, res) => {
+  const result = await makeBackendRequest('POST', '/auth/login', req.body);
+  if (result.success) {
+    // Decode token to get role
+    const token = result.data.token;
+    let role = 'user'; // default
+    try {
+      const payload = token.split('.')[1];
+      const decoded = JSON.parse(Buffer.from(payload, 'base64').toString());
+      role = decoded.role || 'user';
+    } catch (e) {
+      console.error('Error decoding token:', e);
+    }
+
+    // Store token and role in session
+    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    sessions[sessionId] = { token: result.data.token, user: req.body.username, role: role };
+    res.cookie('sessionId', sessionId, { httpOnly: true, maxAge: 8 * 60 * 60 * 1000 }); // 8 hours
+
+    // Redirect to dashboard (same for all roles)
+    res.redirect('/dashboard');
+  } else {
+    // Redirect back to login with error
+    res.redirect(`/login?error=${encodeURIComponent(result.error)}`);
+  }
+});
+
 app.get('/', (req, res) => {
   res.render('landing', { title: 'Forest Tracker - Home', currentPath: '/' });
 });
@@ -236,11 +273,12 @@ app.get('/report', (req, res) => {
 });
 
 app.get('/dashboard', requireAuth, (req, res) => {
-  res.render('dashboard', { title: 'Forest Tracker - Dashboard', currentPath: '/dashboard' });
+  res.render('dashboard', { title: 'Forest Tracker - Dashboard', currentPath: '/dashboard', role: req.role });
 });
 
 app.get('/login', (req, res) => {
-  res.render('login', { title: 'Forest Tracker - Login', currentPath: '/login' });
+  const error = req.query.error;
+  res.render('login', { title: 'Forest Tracker - Login', currentPath: '/login', error: error });
 });
 
 // Start server

@@ -171,6 +171,46 @@ body {
 .inline-flex { display: inline-flex; }
 .inline-block { display: inline-block; }
 
+/* Navigation */
+.nav-list {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-list li {
+  margin: 0;
+}
+
+.nav-list a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  text-decoration: none;
+}
+
+.nav-list .btn {
+  display: inline-flex;
+}
+
+.nav-list-vertical {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.nav-list-vertical li {
+  width: 100%;
+}
+
+.nav-list-vertical .btn {
+  width: 100%;
+  justify-content: center;
+}
+
 /* Sizing */
 .h-4 { height: 1rem; }
 .h-5 { height: 1.25rem; }

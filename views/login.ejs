@@ -21,10 +21,12 @@
       </div>
 
       <div class="resource-card">
-        <form id="loginForm" class="space-y-6">
-          <div id="errorMessage" class="hidden p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
-            <p class="text-sm text-red-400" id="errorText"></p>
+        <form id="loginForm" action="/login" method="post" class="space-y-6">
+          <% if (typeof error !== 'undefined' && error) { %>
+          <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+            <p class="text-sm text-red-400"><%= error %></p>
           </div>
+          <% } %>
 
           <div class="form-group">
             <label for="username" class="label">Username</label>
@@ -101,107 +103,6 @@
   
   <script src="/js/forest-background.js"></script>
 
-  <!-- ===== UPDATED LOGIN LOGIC BELOW ===== -->
-  <script>
-    // --- Decode JWT to extract role ---
-    function decodeJWT(token) {
-        try {
-            const payload = token.split('.')[1];
-            return JSON.parse(atob(payload));
-        } catch {
-            return null;
-        }
-    }
-
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const submitBtn = document.getElementById('submitBtn');
-        const submitText = document.getElementById('submitText');
-        const submitSpinner = document.getElementById('submitSpinner');
-        const errorMessage = document.getElementById('errorMessage');
-        const errorText = document.getElementById('errorText');
-        
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value;
-        const remember = document.getElementById('remember').checked;
-
-        submitBtn.disabled = true;
-        submitText.classList.add('hidden');
-        submitSpinner.classList.remove('hidden');
-        errorMessage.classList.add('hidden');
-
-        try {
-            const response = await fetch('http://127.0.0.1:5000/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.token) {
-                const decoded = decodeJWT(data.token);
-
-                if (!decoded || !decoded.role) {
-                    throw new Error("Cannot decode user role");
-                }
-
-                const role = decoded.role;
-
-                // Store token + role locally
-                localStorage.setItem('authToken', data.token);
-                localStorage.setItem('username', username);
-                localStorage.setItem('role', role);
-
-                if (remember) {
-                    localStorage.setItem('rememberMe', 'true');
-                }
-
-                submitSpinner.classList.add('hidden');
-                submitText.textContent = 'Success! Redirecting...';
-                submitText.classList.remove('hidden');
-
-                // Redirect based on role
-                setTimeout(() => {
-                    if (role === 'admin') {
-                        window.location.href = '/dashboard';
-                    } else if (role === 'researcher') {
-                        window.location.href = '/policy-results';
-                    } else {
-                        window.location.href = '/';
-                    }
-                }, 800);
-
-            } else {
-                errorText.textContent = data.error || 'Login failed. Please check your credentials.';
-                errorMessage.classList.remove('hidden');
-                submitBtn.disabled = false;
-                submitText.classList.remove('hidden');
-                submitSpinner.classList.add('hidden');
-            }
-
-        } catch (error) {
-            errorText.textContent = 'Network or decoding error. Please try again.';
-            errorMessage.classList.remove('hidden');
-            submitBtn.disabled = false;
-            submitText.classList.remove('hidden');
-            submitSpinner.classList.add('hidden');
-        }
-    });
-
-    // Auto-redirect if already logged in
-    const savedToken = localStorage.getItem('authToken');
-    if (savedToken) {
-        const decoded = decodeJWT(savedToken);
-
-        if (decoded && decoded.role === 'admin') {
-            window.location.href = '/dashboard';
-        } else if (decoded && decoded.role === 'researcher') {
-            window.location.href = '/policy-results';
-        }
-    }
-</script>
 
 </body>
 </html>

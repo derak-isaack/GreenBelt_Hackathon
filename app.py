@@ -6,6 +6,7 @@ from research import research_bp
 from whistle import whistle_bp
 from dashboard import dashboard_bp
 from flask_cors import CORS
+from analyis import ndvi_bp
 
 # app = Flask()
 app = Flask(__name__)
@@ -17,6 +18,7 @@ app.register_blueprint(login_bp, url_prefix="/auth")
 app.register_blueprint(research_bp, url_prefix="/research")
 app.register_blueprint(whistle_bp, url_prefix="/whistle")
 app.register_blueprint(dashboard_bp, url_prefix="/dashboard")
+app.register_blueprint(ndvi_bp, url_prefix="/ndvi")
 # app.register_blueprint(login_bp, url_prefix="/auth")
 
 @app.get("/evaluate")

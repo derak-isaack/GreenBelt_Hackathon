@@ -41,6 +41,37 @@
         </div>
       </div>
 
+      <!-- NDVI Trend -->
+      <div class="space-y-6 mb-8">
+        <h2 class="text-2xl font-bold text-foreground flex items-center gap-2">
+          <svg class="h-6 w-6 text-forest-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18"></path>
+          </svg>
+          NDVI Trend
+        </h2>
+        <div class="card bg-card/80 backdrop-blur-sm border-forest-border">
+          <div id="ndviStatus" class="text-center py-6 text-muted-foreground">
+            Loading NDVI trend...
+          </div>
+          <canvas id="ndviChart" class="hidden mt-6 h-64"></canvas>
+        </div>
+      </div>
+
+      <!-- Policy Analysis -->
+      <div class="space-y-6 mb-8">
+        <h2 class="text-2xl font-bold text-foreground flex items-center gap-2">
+          <svg class="h-6 w-6 text-forest-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          Policy Analysis
+        </h2>
+        <div id="policyAnalysis" class="card bg-card/80 backdrop-blur-sm border-forest-border">
+          <div class="text-center py-6 text-muted-foreground">
+            Loading policy analysis...
+          </div>
+        </div>
+      </div>
+
       <!-- Dashboard Data -->
       <div class="space-y-6 mb-8">
         <h2 class="text-2xl font-bold text-foreground flex items-center gap-2">
@@ -59,6 +90,7 @@
       </div>
 
       <!-- Recent Reports -->
+      <% if (role === 'admin') { %>
       <div class="space-y-6">
         <h2 class="text-2xl font-bold text-foreground flex items-center gap-2">
           <svg class="h-6 w-6 text-forest-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,11 +106,29 @@
           </div>
         </div>
       </div>
+      <% } %>
     </div>
   </div>
 </div>
+  </main>
 
-<script>
+  <%- include('partials/footer') %>
+
+  <script src="/js/forest-background.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" integrity="sha256-4KP68Y2SqisbeG08Wq6NyEvOVywD5H606teKjacVtrM=" crossorigin="anonymous"></script>
+
+  <script>
+  const dashboardContainer = document.getElementById('dashboardData');
+  const reportsContainer = document.getElementById('reportsList');
+  const ndviStatus = document.getElementById('ndviStatus');
+  const ndviCanvas = document.getElementById('ndviChart');
+  let ndviChartInstance = null;
+  let hasLoadedNdvi = false;
+  let hasLoadedDashboard = false;
+  let hasLoadedReports = false;
+  let refreshTimer = null;
+  const REFRESH_INTERVAL = 60000;
+
   function getHealthStatus(health) {
     if (health >= 80) return { label: 'Excellent', color: 'bg-green-500/20 text-green-600 border-green-500/30' };
     if (health >= 60) return { label: 'Good', color: 'bg-forest-primary/20 text-forest-primary border-forest-primary/30' };
@@ -92,157 +142,378 @@
     return { label: 'Low', color: 'bg-green-500/20 text-green-600 border-green-500/30' };
   }
 
-  async function loadDashboard() {
-    try {
-      // Load dashboard data
-      const dashboardResponse = await fetch('/api/dashboard/data');
-      const dashboardData = await dashboardResponse.json();
-      
-      // Load reports
-      const reportsResponse = await fetch('/api/whistle/reports');
-      const reports = await reportsResponse.json();
+  function updateSummaryCards(dashboardData, reports) {
+    document.getElementById('totalReports').textContent = reports.length || 0;
+    document.getElementById('monitoredAreas').textContent = dashboardData.length || 0;
 
-      // Update summary cards
-      document.getElementById('totalReports').textContent = reports.length || 0;
-      document.getElementById('monitoredAreas').textContent = dashboardData.length || 0;
-      
-      if (dashboardData.length > 0) {
-        const avgHealth = Math.round(
-          dashboardData.reduce((acc, d) => acc + Number(d.forestHealth || 0), 0) / dashboardData.length
-        );
-        document.getElementById('avgHealth').textContent = avgHealth + '%';
-      } else {
-        document.getElementById('avgHealth').textContent = 'N/A';
-      }
-
-      // Render dashboard data
-      const dashboardContainer = document.getElementById('dashboardData');
-      if (dashboardData.length > 0) {
-        dashboardContainer.innerHTML = dashboardData.map((data, index) => {
-          const healthStatus = getHealthStatus(Number(data.forestHealth || 0));
-          const encroachmentInfo = getEncroachmentLevel(Number(data.encroachmentLevel || 0));
-          
-          return \`
-            <div class="card bg-card/80 backdrop-blur-sm border-forest-border hover:border-forest-primary/50 transition-all duration-300">
-              <div class="card-header">
-                <div class="flex items-start justify-between">
-                  <h3 class="card-title text-lg">Monitoring Area #\${index + 1}</h3>
-                  <span class="badge \${healthStatus.color}">\${healthStatus.label}</span>
-                </div>
-              </div>
-              <div class="space-y-4">
-                <div class="space-y-3">
-                  <div class="flex items-center justify-between">
-                    <span class="text-sm text-muted-foreground">Forest Health</span>
-                    <span class="text-lg font-semibold text-foreground">\${data.forestHealth || 0}%</span>
-                  </div>
-                  <div class="w-full bg-muted rounded-full h-2">
-                    <div class="bg-forest-primary h-2 rounded-full transition-all duration-500" style="width: \${data.forestHealth || 0}%"></div>
-                  </div>
-                </div>
-                <div class="space-y-3">
-                  <div class="flex items-center justify-between">
-                    <span class="text-sm text-muted-foreground">Encroachment Level</span>
-                    <span class="badge \${encroachmentInfo.color}">\${encroachmentInfo.label}</span>
-                    <span class="text-lg font-semibold text-foreground">\${data.encroachmentLevel || 0}%</span>
-                  </div>
-                  <div class="w-full bg-muted rounded-full h-2">
-                    <div class="bg-forest-accent h-2 rounded-full transition-all duration-500" style="width: \${data.encroachmentLevel || 0}%"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          \`;
-        }).join('');
-      } else {
-        dashboardContainer.innerHTML = \`
-          <div class="card bg-card/80 backdrop-blur-sm border-forest-border">
-            <div class="py-12 text-center">
-              <svg class="h-12 w-12 text-muted-foreground mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-              </svg>
-              <p class="text-lg text-muted-foreground">No monitoring data available yet.</p>
-            </div>
-          </div>
-        \`;
-      }
-
-      // Render reports
-      const reportsContainer = document.getElementById('reportsList');
-      if (reports.length > 0) {
-        reportsContainer.innerHTML = reports.slice(0, 10).map(report => {
-          const date = new Date(Number(report.timestamp) / 1000000);
-          return \`
-            <div class="card bg-card/80 backdrop-blur-sm border-forest-border hover:border-forest-primary/50 transition-all duration-300">
-              <div class="py-4">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div class="flex-1 space-y-2">
-                    <div class="flex items-center gap-2">
-                      <svg class="h-4 w-4 text-forest-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                      </svg>
-                      <span class="font-medium text-foreground">\${report.location || 'Unknown'}</span>
-                    </div>
-                    <p class="text-sm text-muted-foreground line-clamp-2">\${report.incidentDetails || report.report || ''}</p>
-                  </div>
-                  <div class="text-xs text-muted-foreground whitespace-nowrap">
-                    \${date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                  </div>
-                </div>
-              </div>
-            </div>
-          \`;
-        }).join('');
-      } else {
-        reportsContainer.innerHTML = \`
-          <div class="card bg-card/80 backdrop-blur-sm border-forest-border">
-            <div class="py-12 text-center">
-              <svg class="h-12 w-12 text-muted-foreground mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-              </svg>
-              <p class="text-lg text-muted-foreground">No reports submitted yet.</p>
-            </div>
-          </div>
-        \`;
-      }
-    } catch (error) {
-      console.error('Error loading dashboard:', error);
-      document.getElementById('dashboardData').innerHTML = \`
-        <div class="card bg-card/80 backdrop-blur-sm border-forest-border">
-          <div class="py-12 text-center">
-            <p class="text-lg text-muted-foreground">Error loading data. Please try again later.</p>
-          </div>
-        </div>
-      \`;
+    if (dashboardData.length > 0) {
+      const avgHealth = Math.round(
+        dashboardData.reduce((acc, d) => acc + Number(d.forestHealth || 0), 0) / dashboardData.length
+      );
+      document.getElementById('avgHealth').textContent = `${avgHealth}%`;
+    } else {
+      document.getElementById('avgHealth').textContent = 'N/A';
     }
   }
 
-  // Load dashboard on page load
-  loadDashboard();
-  
-  // Refresh every 30 seconds
-  setInterval(loadDashboard, 30000);
-</script>
-  </main>
-  
-  <%- include('partials/footer') %>
-  
-  <script src="/js/forest-background.js"></script>
-  <script>
-    // Check authentication on page load
-    (function() {
-      const authToken = localStorage.getItem('authToken');
-      const sessionId = document.cookie.split('; ').find(row => row.startsWith('sessionId='));
-      
-      if (!authToken && !sessionId) {
-        // No authentication, redirect to login
-        const currentPath = window.location.pathname;
-        window.location.href = '/login?redirect=' + encodeURIComponent(currentPath);
+  function renderDashboardCards(data) {
+    if (!data.length) {
+      dashboardContainer.innerHTML = `
+        <div class="card bg-card/80 backdrop-blur-sm border-forest-border">
+          <div class="py-12 text-center">
+            <p class="text-lg text-muted-foreground">No monitoring data available yet.</p>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    dashboardContainer.innerHTML = data.map((entry, index) => {
+      const healthStatus = getHealthStatus(Number(entry.forestHealth || 0));
+      const encroachmentInfo = getEncroachmentLevel(Number(entry.encroachmentLevel || 0));
+
+      return `
+        <div class="card bg-card/80 backdrop-blur-sm border-forest-border hover:border-forest-primary/50 transition-all duration-300">
+          <div class="card-header">
+            <div class="flex items-start justify-between">
+              <h3 class="card-title text-lg">Monitoring Area #${index + 1}</h3>
+              <span class="badge ${healthStatus.color}">${healthStatus.label}</span>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-muted-foreground">Forest Health</span>
+                <span class="text-lg font-semibold text-foreground">${entry.forestHealth || 0}%</span>
+              </div>
+              <div class="w-full bg-muted rounded-full h-2">
+                <div class="bg-forest-primary h-2 rounded-full" style="width: ${entry.forestHealth || 0}%"></div>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-muted-foreground">Encroachment Level</span>
+                <span class="badge ${encroachmentInfo.color}">${encroachmentInfo.label}</span>
+                <span class="text-lg font-semibold text-foreground">${entry.encroachmentLevel || 0}%</span>
+              </div>
+              <div class="w-full bg-muted rounded-full h-2">
+                <div class="bg-forest-accent h-2 rounded-full" style="width: ${entry.encroachmentLevel || 0}%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderReportCards(reports) {
+    if (!reports.length) {
+      reportsContainer.innerHTML = `
+        <div class="card bg-card/80 backdrop-blur-sm border-forest-border">
+          <div class="py-12 text-center">
+            <p class="text-lg text-muted-foreground">No reports submitted yet.</p>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    reportsContainer.innerHTML = reports.slice(0, 10).map((report) => {
+      const date = new Date(Number(report.timestamp) / 1000000);
+
+      return `
+        <div class="card bg-card/80 backdrop-blur-sm border-forest-border hover:border-forest-primary/50 transition-all duration-300">
+          <div class="py-4">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div class="flex-1 space-y-2">
+                <div class="flex items-center gap-2">
+                  <span class="font-medium text-foreground">${report.location || 'Unknown'}</span>
+                </div>
+                <p class="text-sm text-muted-foreground line-clamp-2">${report.incidentDetails || report.report || ''}</p>
+              </div>
+              <div class="text-xs text-muted-foreground whitespace-nowrap">
+                ${date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function formatNdviLabels(ndviData) {
+    return ndviData.map((entry) => {
+      const year = entry.year ?? entry.Year ?? entry.YEAR;
+      const month = entry.month ?? entry.Month ?? entry.MONTH;
+      if (typeof year === 'undefined' || typeof month === 'undefined') {
+        return 'Unknown';
+      }
+      return `${year}-${String(month).padStart(2, '0')}`;
+    });
+  }
+
+  function formatNdviValues(ndviData) {
+    return ndviData.map((entry) => {
+      const raw = entry.NDVI ?? entry.ndvi ?? 0;
+      const value = Number(raw);
+      return Number.isFinite(value) ? Number(value.toFixed(3)) : 0;
+    });
+  }
+
+  function renderNdviChart(ndviData) {
+    if (!ndviCanvas) return;
+    const labels = formatNdviLabels(ndviData);
+    const values = formatNdviValues(ndviData);
+
+    const context = ndviCanvas.getContext('2d');
+    if (!context) return;
+
+    const dataset = {
+      label: 'NDVI',
+      data: values,
+      borderColor: 'rgba(74, 222, 128, 0.9)',
+      backgroundColor: 'rgba(74, 222, 128, 0.15)',
+      tension: 0.35,
+      fill: true,
+      pointRadius: 2,
+      pointBackgroundColor: 'rgba(74, 222, 128, 1)',
+    };
+
+    if (ndviChartInstance) {
+      ndviChartInstance.data.labels = labels;
+      ndviChartInstance.data.datasets[0] = dataset;
+      ndviChartInstance.update();
+      return;
+    }
+
+    ndviChartInstance = new Chart(context, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [dataset],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            suggestedMin: -0.2,
+            suggestedMax: 1,
+            grid: {
+              color: 'rgba(255, 255, 255, 0.05)',
+            },
+            ticks: {
+              color: 'rgba(255, 255, 255, 0.6)',
+              callback: (value) => Number(value).toFixed(2),
+            },
+          },
+          x: {
+            ticks: {
+              color: 'rgba(255, 255, 255, 0.6)',
+              maxRotation: 0,
+              autoSkipPadding: 16,
+            },
+            grid: {
+              display: false,
+            },
+          },
+        },
+        plugins: {
+          legend: {
+            labels: {
+              color: 'rgba(255, 255, 255, 0.8)',
+            },
+          },
+          tooltip: {
+            callbacks: {
+              label: (context) => `NDVI: ${Number(context.parsed.y).toFixed(3)}`,
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async function loadNdviTrend() {
+    if (!ndviStatus || !ndviCanvas) return;
+
+    try {
+      const response = await fetch('/api/ndvi/trend');
+      if (!response.ok) {
+        throw new Error('Failed to fetch NDVI trend');
+      }
+
+      const ndviData = await response.json();
+      if (!Array.isArray(ndviData) || ndviData.length === 0) {
+        ndviStatus.textContent = 'No NDVI data available.';
         return;
       }
-    })();
-  </script>
+
+      ndviStatus.classList.add('hidden');
+      ndviCanvas.classList.remove('hidden');
+      renderNdviChart(ndviData);
+      hasLoadedNdvi = true;
+    } catch (error) {
+      console.error('Error loading NDVI trend:', error);
+      if (!hasLoadedNdvi) {
+        ndviStatus.textContent = 'Unable to load NDVI trend.';
+      }
+    }
+  }
+
+  async function loadDashboard() {
+    if (refreshTimer) {
+      clearTimeout(refreshTimer);
+    }
+
+    try {
+      const [dashboardResponse, reportsResponse] = await Promise.all([
+        fetch('/api/dashboard/data'),
+        fetch('/api/whistle/reports')
+      ]);
+
+      const dashboardData = await dashboardResponse.json();
+      const reports = await reportsResponse.json();
+
+      updateSummaryCards(dashboardData, reports);
+      renderDashboardCards(dashboardData);
+      renderReportCards(reports);
+
+      hasLoadedDashboard = true;
+      hasLoadedReports = true;
+    } catch (error) {
+      console.error('Error loading dashboard:', error);
+
+      if (!hasLoadedDashboard) {
+        dashboardContainer.innerHTML = `
+          <div class="card bg-card/80 backdrop-blur-sm border-forest-border">
+            <div class="py-12 text-center">
+              <p class="text-lg text-muted-foreground">Unable to load dashboard data. Please try again.</p>
+            </div>
+          </div>
+        `;
+      }
+
+      if (!hasLoadedReports) {
+        reportsContainer.innerHTML = `
+          <div class="card bg-card/80 backdrop-blur-sm border-forest-border">
+            <div class="py-12 text-center">
+              <p class="text-lg text-muted-foreground">Unable to load reports. Please try again.</p>
+            </div>
+          </div>
+        `;
+      }
+    } finally {
+      refreshTimer = setTimeout(() => loadDashboard(), REFRESH_INTERVAL);
+    }
+  }
+
+  loadDashboard();
+
+  (function() {
+    const authToken = localStorage.getItem('authToken');
+    const sessionId = document.cookie.split('; ').find(r => r.startsWith('sessionId='));
+    const isLoginPage = window.location.pathname === '/login';
+
+    if (!authToken && !sessionId && !isLoginPage) {
+      const currentPath = window.location.pathname;
+      window.location.href = '/login?redirect=' + encodeURIComponent(currentPath);
+    }
+  })();
+
+  loadNdviTrend();
+
+  async function loadPolicyAnalysis() {
+    try {
+      const response = await fetch('/api/dashboard/policy-results');
+      if (!response.ok) throw new Error('Failed to fetch policy results');
+      const data = await response.json();
+      renderPolicyAnalysis(data);
+    } catch (error) {
+      console.error('Error loading policy analysis:', error);
+      document.getElementById('policyAnalysis').innerHTML = '<div class="text-center py-6 text-muted-foreground">Unable to load policy analysis.</div>';
+    }
+  }
+
+  function getCorrelationStrength(coeff) {
+    const absCoeff = Math.abs(coeff);
+    if (absCoeff >= 0.8) return 'Strong';
+    if (absCoeff >= 0.6) return 'Moderate';
+    if (absCoeff >= 0.3) return 'Weak';
+    return 'Very Weak';
+  }
+
+  function renderPolicyAnalysis(data) {
+    let html = '<div class="space-y-6">';
+    if (data.results) {
+      html += '<div><h3 class="text-lg font-semibold mb-2">Policy Evaluation Results</h3><div class="text-sm whitespace-pre-wrap">' + data.results.replace(/\n/g, '<br>') + '</div></div>';
+    }
+    if (data.correlation_analysis && !data.correlation_analysis.error) {
+      const coeff = data.correlation_analysis.correlation_coefficient;
+      const strength = coeff !== null && coeff !== undefined ? getCorrelationStrength(coeff) : 'N/A';
+      html += '<div><h3 class="text-lg font-semibold mb-2">NDVI-GDP Correlation Analysis</h3>';
+      html += '<p><strong>Correlation Strength:</strong> ' + strength + ' (' + (coeff !== null && coeff !== undefined ? coeff.toFixed(3) : 'N/A') + ')</p>';
+      html += '<p><strong>P-Value:</strong> ' + (data.correlation_analysis.p_value || 'N/A') + '</p>';
+      if (data.correlation_analysis.regression_summary) {
+        html += '<details class="mt-4"><summary class="cursor-pointer text-forest-primary">View Regression Summary</summary><pre class="whitespace-pre-wrap text-xs mt-2 bg-muted p-2 rounded">' + data.correlation_analysis.regression_summary + '</pre></details>';
+      }
+      html += '</div>';
+
+      // NDVI Prediction Section
+      html += '<div><h3 class="text-lg font-semibold mb-2">Economic Impact Prediction</h3>';
+      html += '<p class="text-sm text-muted-foreground mb-4">Enter an NDVI value to predict its economic impact on GDP.</p>';
+      html += '<div class="flex gap-4 items-end">';
+      html += '<div class="flex-1"><label class="block text-sm font-medium mb-2">NDVI Value (-1 to 1)</label><input type="number" id="ndviInput" min="-1" max="1" step="0.01" class="w-full px-3 py-2 bg-card border border-forest-border rounded-md text-foreground" placeholder="e.g., 0.5"></div>';
+      html += '<button id="predictBtn" class="px-4 py-2 bg-forest-primary text-white rounded-md hover:bg-forest-primary/80 transition-colors">Predict GDP</button>';
+      html += '</div>';
+      html += '<div id="predictionResult" class="mt-4 text-sm"></div>';
+      html += '</div>';
+    } else if (data.correlation_analysis && data.correlation_analysis.error) {
+      html += '<div><h3 class="text-lg font-semibold mb-2">Correlation Analysis</h3><p class="text-red-500">Error: ' + data.correlation_analysis.error + '</p></div>';
+    }
+    html += '</div>';
+    document.getElementById('policyAnalysis').innerHTML = html;
+
+    // Add event listener for prediction
+    const predictBtn = document.getElementById('predictBtn');
+    const ndviInput = document.getElementById('ndviInput');
+    const predictionResult = document.getElementById('predictionResult');
+
+    if (predictBtn && ndviInput && predictionResult) {
+      predictBtn.addEventListener('click', async () => {
+        const ndviValue = parseFloat(ndviInput.value);
+        if (isNaN(ndviValue) || ndviValue < -1 || ndviValue > 1) {
+          predictionResult.innerHTML = '<p class="text-red-500">Please enter a valid NDVI value between -1 and 1.</p>';
+          return;
+        }
+
+        predictionResult.innerHTML = '<p class="text-muted-foreground">Predicting...</p>';
+
+        try {
+          const response = await fetch('/api/dashboard/ndvi/predict', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ndvi: ndviValue })
+          });
+
+          if (!response.ok) {
+            throw new Error('Prediction failed');
+          }
+
+          const result = await response.json();
+          const predictedGdp = result.predicted_gdp;
+          predictionResult.innerHTML = '<p class="text-green-600"><strong>Predicted GDP:</strong> $' + predictedGdp.toLocaleString('en-US', { maximumFractionDigits: 2 }) + ' billion</p>';
+        } catch (error) {
+          console.error('Prediction error:', error);
+          predictionResult.innerHTML = '<p class="text-red-500">Error: Unable to predict GDP. Please try again.</p>';
+        }
+      });
+    }
+  }
+
+  loadPolicyAnalysis();
+</script>
+
 </body>
 </html>
-

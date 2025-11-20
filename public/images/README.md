@@ -8,3 +8,4 @@ To use a local forest path image:
 
 Alternatively, you can update the CSS in `public/css/styles.css` to use your own image URL.
 
+
