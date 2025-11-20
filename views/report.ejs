@@ -126,7 +126,7 @@
     submitBtn.innerHTML = '<span class="spinner"></span> Submitting Report...';
 
     try {
-      const response = await fetch('/api/whistle/submit', {
+      const response = await fetch('/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
