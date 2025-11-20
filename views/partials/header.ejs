@@ -1,12 +1,11 @@
 <header class="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
   <div class="container mx-auto px-4 py-4">
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between w-full">
       <a href="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
         <img src="/assets/generated/forest-tracker-logo-transparent.dim_200x200.png" alt="Forest Tracker" class="h-10 w-10" onerror="this.style.display='none'">
         <span class="text-xl font-bold text-forest-primary">Forest Tracker</span>
       </a>
 
-      <!-- Desktop Navigation - Right Side -->
       <nav class="hidden md:flex items-center gap-6 ml-auto">
         <a href="/" class="text-sm font-medium text-foreground/80 hover:text-forest-primary transition-colors <%= currentPath === '/' ? 'text-forest-primary' : '' %>">Home</a>
         <a href="/dashboard" class="text-sm font-medium text-foreground/80 hover:text-forest-primary transition-colors <%= currentPath === '/dashboard' ? 'text-forest-primary' : '' %>">Dashboard</a>
