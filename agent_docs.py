@@ -7,7 +7,7 @@ from pypdf import PdfReader
 # import google.generativeai as genai
 from google import genai
 from dateutil import parser as date_parser
-from analyis import df, monthly_ndvi
+from analysis import df, monthly_ndvi
 
 
 MAX_CONTEXT_CHARS = 50_000

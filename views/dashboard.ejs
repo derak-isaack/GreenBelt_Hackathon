@@ -352,7 +352,7 @@
 
     try {
       console.log('loadNdviTrend: Starting fetch to /api/ndvi/trend');
-      const response = await fetch('/api/ndvi/trend');
+      const response = await fetch('/api/s1/trend');
       console.log('loadNdviTrend: Response status:', response.status);
       if (!response.ok) {
         throw new Error('Failed to fetch NDVI trend');

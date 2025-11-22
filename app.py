@@ -6,7 +6,7 @@ from research import research_bp
 from whistle import whistle_bp
 from dashboard import dashboard_bp
 from flask_cors import CORS
-from analyis import ndvi_bp
+from analysis import ndvi_bp
 
 # app = Flask()
 app = Flask(__name__)
