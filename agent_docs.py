@@ -1,9 +1,11 @@
 import os
+import logging
 import asyncio
 import re
 from textwrap import shorten
 from pypdf import PdfReader
-from google import adk
+# import google.generativeai as genai
+from google import genai
 from dateutil import parser as date_parser
 from analyis import df, monthly_ndvi
 
@@ -157,7 +159,9 @@ def build_combined_context(df, monthly_ndvi, pdf_paths: dict) -> str:
 
 
 async def policy_evaluation():
-    client = adk.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+    # Note: Ensure GEMINI_API_KEY is set in .env
+    # model = genai.GenerativeModel("gemini-1.5-flash")
 
     pdfs = {
         "Makueni County Bill": "makueniBill.pdf",
@@ -188,16 +192,16 @@ async def policy_evaluation():
         "12. Propose specific cost-saving measures based on NDVI trends and policy effectiveness analysis. Identify areas where current spending is inefficient and suggest reallocations or reductions that could improve forest health outcomes.\n\n"
         f"=== DATA CONTEXT ===\n{data_context}"
     )
-    loop = asyncio.get_event_loop()
-    response = await loop.run_in_executor(
-        None,
-        lambda: client.responses.create(
-            model="gemini-2.0-flash",
-            input=task_text
-        )
-    )
 
-    return response.output_text
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=task_text
+        )
+        return response.text
+    except Exception as e:
+        logging.error(f"Error in policy_evaluation: {e}")
+        return "Error: Unable to generate policy evaluation due to API failure."
 
 
 if __name__ == "__main__":

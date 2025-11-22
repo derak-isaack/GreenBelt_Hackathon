@@ -115,7 +115,7 @@
   <%- include('partials/footer') %>
 
   <script src="/js/forest-background.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" integrity="sha256-4KP68Y2SqisbeG08Wq6NyEvOVywD5H606teKjacVtrM=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" crossorigin="anonymous"></script>
 
   <script>
   const dashboardContainer = document.getElementById('dashboardData');
@@ -262,12 +262,21 @@
   }
 
   function renderNdviChart(ndviData) {
-    if (!ndviCanvas) return;
+    console.log('renderNdviChart: Called with ndviData:', ndviData);
+    if (!ndviCanvas) {
+      console.log('renderNdviChart: No ndviCanvas element');
+      return;
+    }
     const labels = formatNdviLabels(ndviData);
     const values = formatNdviValues(ndviData);
+    console.log('renderNdviChart: Formatted labels:', labels);
+    console.log('renderNdviChart: Formatted values:', values);
 
     const context = ndviCanvas.getContext('2d');
-    if (!context) return;
+    if (!context) {
+      console.log('renderNdviChart: No 2d context available');
+      return;
+    }
 
     const dataset = {
       label: 'NDVI',
@@ -280,13 +289,16 @@
       pointBackgroundColor: 'rgba(74, 222, 128, 1)',
     };
 
+    console.log('renderNdviChart: Creating/updating chart, Chart available:', typeof Chart);
     if (ndviChartInstance) {
+      console.log('renderNdviChart: Updating existing chart');
       ndviChartInstance.data.labels = labels;
       ndviChartInstance.data.datasets[0] = dataset;
       ndviChartInstance.update();
       return;
     }
 
+    console.log('renderNdviChart: Creating new chart');
     ndviChartInstance = new Chart(context, {
       type: 'line',
       data: {
@@ -339,17 +351,23 @@
     if (!ndviStatus || !ndviCanvas) return;
 
     try {
+      console.log('loadNdviTrend: Starting fetch to /api/ndvi/trend');
       const response = await fetch('/api/ndvi/trend');
+      console.log('loadNdviTrend: Response status:', response.status);
       if (!response.ok) {
         throw new Error('Failed to fetch NDVI trend');
       }
 
       const ndviData = await response.json();
+      console.log('loadNdviTrend: Received ndviData:', ndviData);
+      console.log('loadNdviTrend: ndviData type:', typeof ndviData, 'isArray:', Array.isArray(ndviData), 'length:', ndviData?.length);
       if (!Array.isArray(ndviData) || ndviData.length === 0) {
+        console.log('loadNdviTrend: No data or empty array, setting status to no data');
         ndviStatus.textContent = 'No NDVI data available.';
         return;
       }
 
+      console.log('loadNdviTrend: Data valid, hiding status and showing chart');
       ndviStatus.classList.add('hidden');
       ndviCanvas.classList.remove('hidden');
       renderNdviChart(ndviData);
@@ -368,13 +386,20 @@
     }
 
     try {
+      console.log('loadDashboard: starting fetches');
       const [dashboardResponse, reportsResponse] = await Promise.all([
         fetch('/api/dashboard/data'),
         fetch('/api/whistle/reports')
       ]);
 
+      console.log('loadDashboard: dashboardResponse status:', dashboardResponse.status);
+      console.log('loadDashboard: reportsResponse status:', reportsResponse.status);
+
       const dashboardData = await dashboardResponse.json();
       const reports = await reportsResponse.json();
+
+      console.log('loadDashboard: dashboardData length:', dashboardData.length);
+      console.log('loadDashboard: reports length:', reports.length);
 
       updateSummaryCards(dashboardData, reports);
       renderDashboardCards(dashboardData);
@@ -413,12 +438,17 @@
 
   (function() {
     const authToken = localStorage.getItem('authToken');
-    const sessionId = document.cookie.split('; ').find(r => r.startsWith('sessionId='));
     const isLoginPage = window.location.pathname === '/login';
+    console.log('Dashboard auth check: authToken present:', !!authToken);
+    console.log('Dashboard auth check: isLoginPage:', isLoginPage);
+    console.log('Dashboard auth check: currentPath:', window.location.pathname);
 
-    if (!authToken && !sessionId && !isLoginPage) {
+    if (!authToken && !isLoginPage) {
+      console.log('Dashboard auth check: redirecting to login');
       const currentPath = window.location.pathname;
       window.location.href = '/login?redirect=' + encodeURIComponent(currentPath);
+    } else {
+      console.log('Dashboard auth check: auth ok, staying on page');
     }
   })();
 
@@ -426,7 +456,19 @@
 
   async function loadPolicyAnalysis() {
     try {
-      const response = await fetch('/api/dashboard/policy-results');
+      let token = sessionStorage.getItem('token');
+      if (!token) {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+          const [name, value] = cookie.trim().split('=');
+          if (name === 'sessionId') {
+            token = value;
+            break;
+          }
+        }
+      }
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await fetch('/api/dashboard/policy-results', { headers });
       if (!response.ok) throw new Error('Failed to fetch policy results');
       const data = await response.json();
       renderPolicyAnalysis(data);

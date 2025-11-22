@@ -1,0 +1,18 @@
+[
+    {
+        "id": "1605e0fe-22bd-434d-bac6-9d56ed1c0559",
+        "report": "California\n\nTree cutting",
+        "attachments": [],
+        "forest": "gonjes",
+        "timestamp": "2025-11-22T06:59:01.739981",
+        "status": "received"
+    },
+    {
+        "id": "28ee9c79-3060-4814-b4f3-65e87e92b912",
+        "report": "Test Location\n\nTest details",
+        "attachments": [],
+        "forest": "Test Forest",
+        "timestamp": "2025-11-22T06:59:51.112167",
+        "status": "received"
+    }
+]

@@ -25,16 +25,21 @@ EVAL_CACHE = {
 # -----------------------
 def get_user_role():
     auth_header = request.headers.get("Authorization", "")
+    print(f"Dashboard get_user_role: auth_header present: {bool(auth_header)}")
 
     if not auth_header or " " not in auth_header:
+        print("Dashboard get_user_role: No valid auth header")
         return None
 
     token = auth_header.split(" ")[1]
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        return payload.get("role")
-    except Exception:
+        role = payload.get("role")
+        print(f"Dashboard get_user_role: decoded role: {role}")
+        return role
+    except Exception as e:
+        print(f"Dashboard get_user_role: JWT decode error: {e}")
         return None
 
 
@@ -57,24 +62,43 @@ def load_whistleblower_stats():
 # -----------------------
 @dashboard_bp.route("/policy-results", methods=["GET"])
 def get_policy_results():
+    print("DEBUG: get_policy_results called")
 
     role = get_user_role()
+    print(f"DEBUG: user role: {role}")
 
     if role not in ["admin", "researcher"]:
+        print("DEBUG: unauthorized access")
         return jsonify({"error": "Unauthorized"}), 403
 
     # Run evaluation or use cache
     if EVAL_CACHE["results"] is None:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        model_output = loop.run_until_complete(policy_evaluation())
+        print("DEBUG: cache empty, running policy evaluation")
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            print("DEBUG: calling policy_evaluation")
+            model_output = loop.run_until_complete(policy_evaluation())
+            print("DEBUG: policy_evaluation completed successfully")
+        except Exception as e:
+            print(f"DEBUG: policy_evaluation failed: {e}")
+            return jsonify({"error": f"Policy evaluation failed: {str(e)}"}), 500
 
         # Compute correlation analysis
+        print("DEBUG: starting correlation analysis")
         try:
+            print("DEBUG: loading NDVI data")
             ndvi_data = load_ndvi_data('makueni_bands.csv')
+            print(f"DEBUG: NDVI data loaded, shape: {ndvi_data.shape}")
+            print("DEBUG: fetching GDP data")
             gdp_data = fetch_gdp_data()
+            print(f"DEBUG: GDP data loaded, shape: {gdp_data.shape}")
+            print("DEBUG: correlating NDVI and GDP")
             corr, p_value, merged_df = correlate_ndvi_gdp(ndvi_data, gdp_data)
+            print(f"DEBUG: correlation: {corr}, p_value: {p_value}")
+            print("DEBUG: running regression analysis")
             regression_summary = regression_analysis(ndvi_data, gdp_data)
+            print("DEBUG: regression completed")
             correlation_results = {
                 "correlation_coefficient": corr,
                 "p_value": p_value,
@@ -82,11 +106,13 @@ def get_policy_results():
                 "regression_summary": str(regression_summary)
             }
         except Exception as e:
+            print(f"DEBUG: correlation analysis failed: {e}")
             correlation_results = {"error": str(e)}
 
         EVAL_CACHE["results"] = model_output
         EVAL_CACHE["correlation_analysis"] = correlation_results
         EVAL_CACHE["last_updated"] = datetime.utcnow().isoformat()
+        print("DEBUG: cache updated")
 
     response = {
         "results": EVAL_CACHE["results"],

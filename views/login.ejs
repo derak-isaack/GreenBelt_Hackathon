@@ -21,7 +21,7 @@
       </div>
 
       <div class="resource-card">
-        <form id="loginForm" action="/login" method="post" class="space-y-6">
+        <form id="loginForm" class="space-y-6">
           <% if (typeof error !== 'undefined' && error) { %>
           <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
             <p class="text-sm text-red-400"><%= error %></p>
@@ -103,6 +103,71 @@
   
   <script src="/js/forest-background.js"></script>
 
+  <script>
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const submitBtn = document.getElementById('submitBtn');
+    const submitText = document.getElementById('submitText');
+    const submitSpinner = document.getElementById('submitSpinner');
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    // Show loading state
+    submitText.style.display = 'none';
+    submitSpinner.style.display = 'inline';
+    submitBtn.disabled = true;
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Store token in localStorage
+        localStorage.setItem('authToken', data.token);
+        console.log('Login successful, token stored, redirecting to dashboard');
+        // Redirect to dashboard
+        window.location.href = '/dashboard';
+      } else {
+        // Show error
+        const errorDiv = document.querySelector('.resource-card .p-4.bg-red-500\\/10');
+        if (!errorDiv) {
+          const form = document.getElementById('loginForm');
+          const newErrorDiv = document.createElement('div');
+          newErrorDiv.className = 'p-4 bg-red-500/10 border border-red-500/30 rounded-lg';
+          newErrorDiv.innerHTML = `<p class="text-sm text-red-400">${data.error || 'Login failed'}</p>`;
+          form.insertBefore(newErrorDiv, form.firstElementChild);
+        } else {
+          errorDiv.innerHTML = `<p class="text-sm text-red-400">${data.error || 'Login failed'}</p>`;
+        }
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      const errorDiv = document.querySelector('.resource-card .p-4.bg-red-500\\/10');
+      if (!errorDiv) {
+        const form = document.getElementById('loginForm');
+        const newErrorDiv = document.createElement('div');
+        newErrorDiv.className = 'p-4 bg-red-500/10 border border-red-500/30 rounded-lg';
+        newErrorDiv.innerHTML = `<p class="text-sm text-red-400">Network error. Please try again.</p>`;
+        form.insertBefore(newErrorDiv, form.firstElementChild);
+      } else {
+        errorDiv.innerHTML = `<p class="text-sm text-red-400">Network error. Please try again.</p>`;
+      }
+    } finally {
+      // Reset loading state
+      submitText.style.display = 'inline';
+      submitSpinner.style.display = 'none';
+      submitBtn.disabled = false;
+    }
+  });
+  </script>
 
 </body>
 </html>

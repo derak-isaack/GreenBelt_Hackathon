@@ -59,11 +59,27 @@ async function makeBackendRequest(method, endpoint, data = null, token = null) {
 app.post('/api/auth/login', async (req, res) => {
   const result = await makeBackendRequest('POST', '/auth/login', req.body);
   if (result.success) {
-    // Store token in session (simplified - use proper session management in production)
+
+    const token = result.data.token;
+    let role = 'user';  // fallback
+
+    try {
+      const payload = token.split('.')[1];
+      const decoded = JSON.parse(Buffer.from(payload, 'base64').toString());
+      role = decoded.role || 'user';
+    } catch (e) {
+      console.error("Error decoding token:", e);
+    }
+
     const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    sessions[sessionId] = { token: result.data.token, user: req.body.username };
-    res.cookie('sessionId', sessionId, { httpOnly: true, maxAge: 8 * 60 * 60 * 1000 }); // 8 hours
-    res.json({ ...result.data, username: req.body.username });
+    sessions[sessionId] = { token, user: req.body.username, role };
+
+    res.cookie('sessionId', sessionId, {
+      httpOnly: true,
+      maxAge: 8 * 60 * 60 * 1000,
+    });
+
+    res.json({ ...result.data, username: req.body.username, role });
   } else {
     res.status(result.status).json({ error: result.error });
   }
@@ -71,34 +87,41 @@ app.post('/api/auth/login', async (req, res) => {
 
 // Middleware to check authentication for API routes
 function checkAuth(req, res, next) {
+  console.log(`checkAuth: ${req.method} ${req.path}, headers auth: ${!!req.headers.authorization}, cookie sessionId: ${!!req.cookies.sessionId}`);
   // Check Authorization header (from localStorage token)
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith('Bearer ')) {
     req.token = authHeader.split(' ')[1];
+    console.log('checkAuth: using auth header token');
     return next();
   }
-  
+
   // Check session cookie (from server-side login)
   const sessionId = req.cookies.sessionId;
   if (sessionId && sessions[sessionId]) {
     req.token = sessions[sessionId].token;
+    console.log('checkAuth: using session cookie token');
     return next();
   }
-  
+
+  console.log('checkAuth: no auth found, returning 401');
   return res.status(401).json({ error: 'Authentication required' });
 }
 
 // Middleware to check authentication for page routes (redirects to login)
 // Note: Client-side checks in the pages will also redirect if no localStorage token exists as a backup
 function requireAuth(req, res, next) {
+  console.log(`requireAuth: ${req.method} ${req.path}, sessionId cookie: ${!!req.cookies.sessionId}`);
   // Check session cookie (from server-side login)
   const sessionId = req.cookies.sessionId;
   if (sessionId && sessions[sessionId]) {
     req.user = sessions[sessionId].user;
     req.role = sessions[sessionId].role;
+    console.log('requireAuth: session valid, proceeding');
     return next();
   }
 
+  console.log('requireAuth: no valid session, redirecting to login');
   // If no session, redirect to login with redirect parameter
   const redirectUrl = req.originalUrl;
   res.redirect(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
@@ -138,6 +161,7 @@ app.post('/api/whistle/submit', async (req, res) => {
   const reportData = {
     report: `${req.body.location || ''}\n\n${req.body.incidentDetails || ''}`,
     attachments: req.body.attachments || [],
+    forest: req.body.forest || '',
   };
   const result = await makeBackendRequest('POST', '/whistle/submit', reportData);
   if (result.success) {
@@ -148,22 +172,38 @@ app.post('/api/whistle/submit', async (req, res) => {
 });
 
 // Dashboard routes
-app.get('/api/dashboard/policy-results', async (req, res) => {
-  const result = await makeBackendRequest('GET', '/dashboard/policy-results');
+app.get('/api/dashboard/policy-results', checkAuth, async (req, res) => {
+  console.log('Dashboard policy-results request headers:', req.headers.authorization ? 'Auth header present' : 'No auth header');
+  const result = await makeBackendRequest('GET', '/dashboard/policy-results', null, req.token);
   if (result.success) {
     res.json(result.data);
   } else {
+    console.log('Backend error for policy-results:', result.status, result.error);
     res.status(result.status).json({ error: result.error });
   }
 });
 
-app.get('/api/dashboard/data', async (req, res) => {
+app.post('/api/dashboard/ndvi/predict', checkAuth, async (req, res) => {
+  console.log('/api/dashboard/ndvi/predict: request received');
+  const result = await makeBackendRequest('POST', '/dashboard/ndvi/predict', req.body, req.token);
+  if (result.success) {
+    res.json(result.data);
+  } else {
+    console.log('Backend error for ndvi/predict:', result.status, result.error);
+    res.status(result.status).json({ error: result.error });
+  }
+});
+
+app.get('/api/dashboard/data', checkAuth, async (req, res) => {
+  console.log('/api/dashboard/data: request received');
   // Get policy results and transform to dashboard data format
-  const policyResult = await makeBackendRequest('GET', '/dashboard/policy-results');
-  
+  const policyResult = await makeBackendRequest('GET', '/dashboard/policy-results', null, req.token);
+  console.log('/api/dashboard/data: policyResult success:', policyResult.success, 'status:', policyResult.status);
+
   // Get reports for dashboard
-  const reportsResult = await makeBackendRequest('GET', '/whistle/reports').catch(() => ({ success: false, data: [] }));
-  
+  const reportsResult = await makeBackendRequest('GET', '/whistle/reports', null, req.token).catch(() => ({ success: false, data: [] }));
+  console.log('/api/dashboard/data: reportsResult success:', reportsResult.success);
+
   // Transform policy results to dashboard format
   let dashboardData = [];
   if (policyResult.success && policyResult.data.results) {
@@ -175,7 +215,8 @@ app.get('/api/dashboard/data', async (req, res) => {
       locationData: ['Forest Area 1', 'Forest Area 2'],
     }];
   }
-  
+
+  console.log('/api/dashboard/data: returning dashboardData length:', dashboardData.length);
   res.json(dashboardData);
 });
 
@@ -188,11 +229,12 @@ app.get('/api/ndvi/trend', async (req, res) => {
   }
 });
 
-app.get('/api/whistle/reports', async (req, res) => {
+app.get('/api/whistle/reports', checkAuth, async (req, res) => {
+  console.log('/api/whistle/reports: request received');
   // Read from the JSON file that Flask writes to
   const fs = require('fs');
   const reportsFile = path.join(__dirname, 'whistleblower_reports.json');
-  
+
   try {
     if (fs.existsSync(reportsFile)) {
       const reports = JSON.parse(fs.readFileSync(reportsFile, 'utf8'));
@@ -204,13 +246,15 @@ app.get('/api/whistle/reports', async (req, res) => {
           id: report.id || `report-${index}`,
           location: lines[0] || 'Unknown',
           incidentDetails: lines.slice(1).join('\n') || reportText,
-          timestamp: report.timestamp 
-            ? (new Date(report.timestamp).getTime() * 1000000) 
+          timestamp: report.timestamp
+            ? (new Date(report.timestamp).getTime() * 1000000)
             : (Date.now() * 1000000), // Convert to nanoseconds format
         };
       });
+      console.log('/api/whistle/reports: returning reports count:', transformedReports.length);
       res.json(transformedReports);
     } else {
+      console.log('/api/whistle/reports: no reports file found');
       res.json([]);
     }
   } catch (error) {
@@ -234,8 +278,10 @@ app.get('/api/evaluate', async (req, res) => {
 // ===================
 
 app.post('/login', async (req, res) => {
+  console.log('Login POST: attempting login for user:', req.body.username);
   const result = await makeBackendRequest('POST', '/auth/login', req.body);
   if (result.success) {
+    console.log('Login POST: backend login success');
     // Decode token to get role
     const token = result.data.token;
     let role = 'user'; // default
@@ -243,18 +289,21 @@ app.post('/login', async (req, res) => {
       const payload = token.split('.')[1];
       const decoded = JSON.parse(Buffer.from(payload, 'base64').toString());
       role = decoded.role || 'user';
+      console.log('Login POST: decoded role:', role);
     } catch (e) {
-      console.error('Error decoding token:', e);
+      console.error('Login POST: Error decoding token:', e);
     }
 
     // Store token and role in session
     const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     sessions[sessionId] = { token: result.data.token, user: req.body.username, role: role };
     res.cookie('sessionId', sessionId, { httpOnly: true, maxAge: 8 * 60 * 60 * 1000 }); // 8 hours
+    console.log('Login POST: session created, cookie set, redirecting to dashboard');
 
     // Redirect to dashboard (same for all roles)
     res.redirect('/dashboard');
   } else {
+    console.log('Login POST: backend login failed:', result.error);
     // Redirect back to login with error
     res.redirect(`/login?error=${encodeURIComponent(result.error)}`);
   }
