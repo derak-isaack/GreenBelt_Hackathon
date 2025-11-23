@@ -1,10 +1,11 @@
 import pandas as pd
-import numpy as np
-from flask import Blueprint, jsonify, request 
+import numpy as np  
 
-ndvi_bp = Blueprint("ndvi", __name__)
+# df = pd.read_csv("SentinelMakueni.csv")
+# print(df)
+# group = df.groupby(['year', 'month']).agg({'RFDI': 'mean'}).reset_index().sort_values(['year', 'month'])
 
-
+# print(group)
 df = pd.read_csv("SentinelMakueni.csv")  
 
 frames = []
@@ -57,40 +58,4 @@ def compute_s1_features(df):
     return df 
 
 df_new = compute_s1_features(df_new)
-
-# Create monthly RFDI aggregation
-monthly_rfdi = df_new.groupby(['year', 'month']).agg({
-    'RFDI': 'mean',
-    'alert': 'sum'
-}).reset_index().sort_values(['year', 'month'])
-
-# For backward compatibility, alias as monthly_ndvi (though it's RFDI now)
-monthly_ndvi = monthly_rfdi.copy()
-
-@ndvi_bp.route("/api/s1/trend", methods=["GET"])
-def s1_trend():
-    # result = df_new.to_dict(orient="records")
-    # return jsonify(result)
-    forest_filter = request.args.get("forest")
-    year_filter = request.args.get("year")
-    month_filter = request.args.get("month")
-    print("request.args:", request.args)
-
-    df_filtered = df_new.copy()
-    print("DataFrame length before filtering:", len(df_new))
-
-    if forest_filter:
-        df_filtered = df_filtered[df_filtered["forest"] == forest_filter]
-    if year_filter:
-        df_filtered = df_filtered[df_filtered["year"] == int(year_filter)]
-    if month_filter:
-        df_filtered = df_filtered[df_filtered["month"] == int(month_filter)]
-
-    print("DataFrame length after filtering:", len(df_filtered))
-
-    # Aggregate by year and month, compute mean RFDI
-    df_aggregated = df_filtered.groupby(['year', 'month']).agg({'RFDI': 'mean'}).reset_index().sort_values(['year', 'month'])
-
-    # Convert to JSON-ready dict
-    result = df_aggregated.to_dict(orient="records")
-    return jsonify(result)
+print(df_new)

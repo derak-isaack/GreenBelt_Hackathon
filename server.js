@@ -220,8 +220,17 @@ app.get('/api/dashboard/data', checkAuth, async (req, res) => {
   res.json(dashboardData);
 });
 
-app.get('/api/ndvi/trend', async (req, res) => {
-  const result = await makeBackendRequest('GET', '/ndvi/api/ndvi/trend');
+app.get('/api/s1/trend', async (req, res) => {
+  const result = await makeBackendRequest('GET', '/ndvi/api/s1/trend' + '?' + new URLSearchParams(req.query).toString());
+  if (result.success) {
+    res.json(result.data);
+  } else {
+    res.status(result.status).json({ error: result.error });
+  }
+});
+
+app.get('/filtered-data', async (req, res) => {
+  const result = await makeBackendRequest('GET', `/dashboard/filtered-data?${new URLSearchParams(req.query).toString()}`);
   if (result.success) {
     res.json(result.data);
   } else {

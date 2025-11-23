@@ -40,18 +40,57 @@
           <div class="stat-label">Overall ecosystem health score</div>
         </div>
       </div>
+      <!-- Filters and Alerts -->
+      <div class="grid md:grid-cols-2 gap-6 mb-8">
+        <!-- Filter Card -->
+        <div class="card bg-card/80 backdrop-blur-sm border-forest-border">
+          <div class="card-header">
+            <h3 class="card-title">Filters</h3>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-2">Year</label>
+              <select id="yearFilter" class="w-full px-3 py-2 bg-card border border-forest-border rounded-md text-foreground">
+                <option value="">All Years</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2">Forest Name</label>
+              <select id="forestFilter" class="w-full px-3 py-2 bg-card border border-forest-border rounded-md text-foreground">
+                <option value="">All Forests</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2">Month</label>
+              <select id="monthFilter" class="w-full px-3 py-2 bg-card border border-forest-border rounded-md text-foreground">
+                <option value="">All Months</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
-      <!-- NDVI Trend -->
+        <!-- Alerts Card -->
+        <div class="stat-card">
+          <p class="card-description mb-2">Alerts Above RFDI Threshold</p>
+          <div class="stat-value" id="alertsCount">-</div>
+          <div class="stat-label">Number of alerts exceeding threshold</div>
+        </div>
+      </div>
+
+      <!-- RFDI Trend -->
       <div class="space-y-6 mb-8">
         <h2 class="text-2xl font-bold text-foreground flex items-center gap-2">
           <svg class="h-6 w-6 text-forest-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18"></path>
           </svg>
-          NDVI Trend
+          RFDI Trend
         </h2>
+        <p class="text-sm text-muted-foreground mb-4">
+          Radar Forest Degradation Index (RFDI) measures forest health using satellite radar data. Values closer to 0 indicate healthy forests, while higher values (>0.3) signal potential degradation or alerts. Monitoring RFDI helps track environmental conservation efforts and biodiversity protection in ASAL areas.
+        </p>
         <div class="card bg-card/80 backdrop-blur-sm border-forest-border">
           <div id="ndviStatus" class="text-center py-6 text-muted-foreground">
-            Loading NDVI trend...
+            Loading RFDI trend...
           </div>
           <canvas id="ndviChart" class="hidden mt-6 h-64"></canvas>
         </div>
@@ -255,7 +294,7 @@
 
   function formatNdviValues(ndviData) {
     return ndviData.map((entry) => {
-      const raw = entry.NDVI ?? entry.ndvi ?? 0;
+      const raw = entry.RFDI ?? entry.NDVI ?? entry.ndvi ?? 0;
       const value = Number(raw);
       return Number.isFinite(value) ? Number(value.toFixed(3)) : 0;
     });
@@ -279,7 +318,7 @@
     }
 
     const dataset = {
-      label: 'NDVI',
+      label: 'RFDI',
       data: values,
       borderColor: 'rgba(74, 222, 128, 0.9)',
       backgroundColor: 'rgba(74, 222, 128, 0.15)',
@@ -293,7 +332,7 @@
     if (ndviChartInstance) {
       console.log('renderNdviChart: Updating existing chart');
       ndviChartInstance.data.labels = labels;
-      ndviChartInstance.data.datasets[0] = dataset;
+      ndviChartInstance.data.datasets[0].data = values;
       ndviChartInstance.update();
       return;
     }
@@ -339,7 +378,7 @@
           },
           tooltip: {
             callbacks: {
-              label: (context) => `NDVI: ${Number(context.parsed.y).toFixed(3)}`,
+              label: (context) => `RFDI: ${Number(context.parsed.y).toFixed(3)}`,
             },
           },
         },
@@ -347,15 +386,19 @@
     });
   }
 
-  async function loadNdviTrend() {
+  async function loadNdviTrend(params = {}) {
     if (!ndviStatus || !ndviCanvas) return;
 
     try {
-      console.log('loadNdviTrend: Starting fetch to /api/ndvi/trend');
-      const response = await fetch('/api/s1/trend');
+      console.log('loadNdviTrend: Starting fetch to /api/s1/trend with params:', params);
+      const url = new URL('/api/s1/trend', window.location.origin);
+      Object.keys(params).forEach(key => {
+        if (params[key]) url.searchParams.append(key, params[key]);
+      });
+      const response = await fetch(url);
       console.log('loadNdviTrend: Response status:', response.status);
       if (!response.ok) {
-        throw new Error('Failed to fetch NDVI trend');
+        throw new Error('Failed to fetch RFDI trend');
       }
 
       const ndviData = await response.json();
@@ -363,7 +406,9 @@
       console.log('loadNdviTrend: ndviData type:', typeof ndviData, 'isArray:', Array.isArray(ndviData), 'length:', ndviData?.length);
       if (!Array.isArray(ndviData) || ndviData.length === 0) {
         console.log('loadNdviTrend: No data or empty array, setting status to no data');
-        ndviStatus.textContent = 'No NDVI data available.';
+        ndviStatus.textContent = 'No RFDI data available.';
+        ndviCanvas.classList.add('hidden');
+        ndviStatus.classList.remove('hidden');
         return;
       }
 
@@ -373,9 +418,11 @@
       renderNdviChart(ndviData);
       hasLoadedNdvi = true;
     } catch (error) {
-      console.error('Error loading NDVI trend:', error);
+      console.error('Error loading RFDI trend:', error);
       if (!hasLoadedNdvi) {
-        ndviStatus.textContent = 'Unable to load NDVI trend.';
+        ndviStatus.textContent = 'Unable to load RFDI trend.';
+        ndviCanvas.classList.add('hidden');
+        ndviStatus.classList.remove('hidden');
       }
     }
   }
@@ -553,6 +600,54 @@
       });
     }
   }
+
+  // Filter and alerts functionality
+  const yearFilter = document.getElementById('yearFilter');
+  const forestFilter = document.getElementById('forestFilter');
+  const monthFilter = document.getElementById('monthFilter');
+  const alertsCount = document.getElementById('alertsCount');
+
+  function populateFilters(data) {
+    const years = [...new Set(data.map(d => d.year))].sort();
+    const forests = [...new Set(data.map(d => d.forest))].sort();
+    const months = [...new Set(data.map(d => d.month))].sort();
+
+    yearFilter.innerHTML = '<option value="">All Years</option>' + years.map(y => `<option value="${y}">${y}</option>`).join('');
+    forestFilter.innerHTML = '<option value="">All Forests</option>' + forests.map(f => `<option value="${f}">${f}</option>`).join('');
+    monthFilter.innerHTML = '<option value="">All Months</option>' + months.map(m => `<option value="${m}">${m}</option>`).join('');
+  }
+
+  async function loadFilteredData() {
+    const year = yearFilter.value;
+    const forest = forestFilter.value;
+    const month = monthFilter.value;
+
+    const params = { year, forest, month };
+
+    try {
+      const response = await fetch(`/filtered-data?${new URLSearchParams(params)}`);
+      const result = await response.json();
+      alertsCount.textContent = result.alert_count || 0;
+
+      // Populate filters only on initial load (no filters selected)
+      if (!year && !forest && !month) {
+        populateFilters(result.data || []);
+      }
+
+      // Update RFDI trend chart with filters
+      loadNdviTrend(params);
+    } catch (error) {
+      console.error('Error loading filtered data:', error);
+    }
+  }
+
+  // Add event listeners for filter changes
+  yearFilter.addEventListener('change', loadFilteredData);
+  forestFilter.addEventListener('change', loadFilteredData);
+  monthFilter.addEventListener('change', loadFilteredData);
+
+  // Initial load
+  loadFilteredData();
 
   loadPolicyAnalysis();
 </script>

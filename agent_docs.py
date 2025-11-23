@@ -7,7 +7,7 @@ from pypdf import PdfReader
 # import google.generativeai as genai
 from google import genai
 from dateutil import parser as date_parser
-from analysis import df, monthly_ndvi
+from analysis import df_new, monthly_ndvi
 
 
 MAX_CONTEXT_CHARS = 50_000
@@ -164,32 +164,33 @@ async def policy_evaluation():
     # model = genai.GenerativeModel("gemini-1.5-flash")
 
     pdfs = {
-        "Makueni County Bill": "makueniBill.pdf",
         "FOLAREP": "Makueni-FOLAREP.pdf",
     }
 
-    data_context = build_combined_context(df, monthly_ndvi, pdfs)
+    data_context = build_combined_context(df_new, monthly_ndvi, pdfs)
 
     task_text = (
         "You are a policy effectiveness evaluator. Using the CSV data containing "
-        "monthly NDVI measurements derived from satellite data, "
-        "and the NDVI trends data, along with the two PDF documents (Makueni County Bill and FOLAREP), perform:\n\n"
-        "1. Extract all mitigation steps, policies, or proposed actions from the PDFs.\n"
-        "2. Examine NDVI trends in the CSV and NDVI trends data.\n"
-        "3. For each step, assess policy effectiveness against NDVI data to determine if the observed data shows it is achieving its goals.\n"
-        "4. Highlight correlations between proposed actions and observed NDVI improvements.\n"
-        "5. Present a structured table with:\n"
-        "   - Proposed Step\n"
+        "monthly RFDI measurements derived from satellite data, "
+        "and the RFDI trends data, along with the FOLAREP PDF document, perform:\n\n"
+        "1. Focus on the FOLAREP PDF's SWOT, PESTEL, and Risk Analysis sections for Makueni County restoration.\n"
+        "2. Extract key findings from the Risk Analysis section, noting that the biggest risk to reforestation is encroachment.\n"
+        "3. Extract key findings from the PESTEL analysis, noting that the biggest threats are information barriers and conflicting government policies.\n"
+        "4. Examine RFDI trends in the CSV and alerts data to assess current forest health.\n"
+        "5. Assess policy effectiveness against RFDI data to determine if observed data shows policies are achieving goals.\n"
+        "6. Highlight correlations between proposed actions in FOLAREP and observed RFDI trends.\n"
+        "7. Present a structured table with:\n"
+        "   - Proposed Step (from FOLAREP)\n"
         "   - Evidence from PDFs / CSV\n"
-        "   - Observed Outcome\n"
+        "   - Observed RFDI Outcome\n"
         "   - Effectiveness Assessment\n"
-        "6. Provide recommendations for policies that are not achieving desired results.\n"
-        "7. Provide layman-friendly explanations of the key findings, avoiding technical jargon where possible.\n"
-        "8. Quantify the economic and governmental impacts of NDVI declines on national and county levels, including potential revenue losses and costs to governments.\n"
-        "9. Based on the analysis, provide actionable policy recommendations to mitigate forest encroachment and improve NDVI trends.\n"
-        "10. Analyze the extracted dates, monetary figures, and budgets from the PDFs.\n"
-        "11. Calculate and report the total funds set aside based on the budget extractions.\n"
-        "12. Propose specific cost-saving measures based on NDVI trends and policy effectiveness analysis. Identify areas where current spending is inefficient and suggest reallocations or reductions that could improve forest health outcomes.\n\n"
+        "8. Provide recommendations for policies that are not achieving desired results.\n"
+        "9. Provide layman-friendly explanations of the key findings, avoiding technical jargon where possible.\n"
+        "10. Quantify the economic and governmental impacts of RFDI declines on national and county levels, including potential revenue losses and costs to governments.\n"
+        "11. Based on the analysis, provide actionable policy recommendations to mitigate forest encroachment and improve RFDI trends.\n"
+        "12. Analyze the extracted dates, monetary figures, and budgets from the FOLAREP PDF.\n"
+        "13. Calculate and report the total funds set aside based on the budget extractions.\n"
+        "14. Propose specific cost-saving measures based on RFDI trends and policy effectiveness analysis. Identify areas where current spending is inefficient and suggest reallocations or reductions that could improve forest health outcomes.\n\n"
         f"=== DATA CONTEXT ===\n{data_context}"
     )
 
@@ -208,3 +209,4 @@ if __name__ == "__main__":
     result = asyncio.run(policy_evaluation())
     print("\n=== POLICY EVALUATION REPORT ===\n")
     print(result)
+

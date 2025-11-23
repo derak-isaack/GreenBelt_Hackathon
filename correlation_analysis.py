@@ -79,7 +79,7 @@ def predict_gdp_from_ndvi(ndvi_df, gdp_df, ndvi_value):
 
 def main():
     # Load NDVI data (proxy for biomass)
-    ndvi_data = load_ndvi_data('makueni_bands.csv')
+    ndvi_data = load_ndvi_data('SentinelMakueni.csv')
 
     # Fetch economic data (GDP)
     gdp_data = fetch_gdp_data()

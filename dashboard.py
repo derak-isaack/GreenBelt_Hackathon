@@ -7,6 +7,8 @@ from agent_docs import policy_evaluation
 import jwt
 from datetime import datetime
 from correlation_analysis import load_ndvi_data, fetch_gdp_data, correlate_ndvi_gdp, regression_analysis, predict_gdp_from_ndvi
+import pandas as pd
+import numpy as np
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
@@ -18,6 +20,53 @@ EVAL_CACHE = {
     "results": None,
     "last_updated": None
 }
+
+# Load and process Sentinel data
+df = pd.read_csv("SentinelMakueni.csv")
+
+frames = []
+for forest in df['forest'].unique():
+    sub = df[df['forest'] == forest].sort_values('date')
+
+    sub = sub.drop_duplicates(subset='date')
+
+    sub['VH'] = sub['VH'].interpolate(method='linear', limit_direction='both')
+
+    frames.append(sub)
+
+df_clean = pd.concat(frames, ignore_index=True)
+
+df_clean.to_csv("Makueni_interpolated.csv", index=False)
+
+df_new = df_clean.copy()
+df_new.drop(columns=['interpolated_flag', '.geo', 'image_count', 'system:index', 'orbit','relative_orbit'],
+            inplace=True, errors="ignore")
+
+df_new["date"] = pd.to_datetime(df_new["date"])
+df_new["month"] = df_new["date"].dt.month
+df_new["year"] = df_new["date"].dt.year
+
+def compute_s1_features(df):
+    df["VV"] = df["VV"].replace([np.inf, -np.inf], np.nan).fillna(0)
+    df["VH"] = df["VH"].replace([np.inf, -np.inf], np.nan).fillna(0)
+
+    df["VV_lin"] = 10 ** (df["VV"] / 10)
+    df["VH_lin"] = 10 ** (df["VH"] / 10)
+
+    df["VH_VV_ratio"] = np.where(df["VV_lin"] != 0, df["VH_lin"] / df["VV_lin"], 0)
+
+    df["RVI"] = np.where((df["VV_lin"] + df["VH_lin"]) != 0,
+                          4 * df["VH_lin"] / (df["VV_lin"] + df["VH_lin"]),
+                          0)
+
+    df["RFDI"] = np.where((df["VV_lin"] + df["VH_lin"]) != 0,
+                           (df["VV_lin"] - df["VH_lin"]) / (df["VV_lin"] + df["VH_lin"]),
+                           0)
+    df['alert'] = np.where(df['RFDI'] > 0.61, 1, 0)
+
+    return df
+
+df_new = compute_s1_features(df_new)
 
 
 # -----------------------
@@ -165,5 +214,59 @@ def predict_ndvi_impact():
 
     except ValueError as e:
         return jsonify({"error": "Invalid NDVI value"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# -----------------------
+#   FILTERED DATA ENDPOINT
+# -----------------------
+@dashboard_bp.route("/filtered-data", methods=["GET"])
+def get_filtered_data():
+    """
+    Get filtered Sentinel-1 data with alerts based on RFDI threshold.
+    Accepts query parameters: forest, year, month
+    Returns filtered data and alert count.
+    """
+    try:
+        # Get filter parameters
+        forest_filter = request.args.get("forest")
+        year_filter = request.args.get("year")
+        month_filter = request.args.get("month")
+
+        # Start with full dataset
+        df_filtered = df_new.copy()
+
+        # Apply filters
+        if forest_filter:
+            df_filtered = df_filtered[df_filtered["forest"] == forest_filter]
+        if year_filter:
+            df_filtered = df_filtered[df_filtered["year"] == int(year_filter)]
+        if month_filter:
+            df_filtered = df_filtered[df_filtered["month"] == int(month_filter)]
+
+        # Sort by date
+        df_filtered = df_filtered.sort_values("date")
+
+        # Compute alert count
+        alert_count = int(df_filtered['alert'].sum())
+
+        # Convert to JSON-ready dict
+        result_data = df_filtered.to_dict(orient="records")
+
+        # Return filtered data and alert count
+        return jsonify({
+            "data": result_data,
+            "alert_count": alert_count,
+            "total_records": len(result_data),
+            "filters_applied": {
+                "forest": forest_filter,
+                "year": year_filter,
+                "month": month_filter
+            }
+        }), 200
+
+    except ValueError as e:
+        return jsonify({"error": "Invalid filter parameter value"}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
