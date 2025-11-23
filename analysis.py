@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
-from flask import Blueprint, jsonify, request 
+import os
+import logging
+from flask import Blueprint, jsonify, request
 
 ndvi_bp = Blueprint("ndvi", __name__)
 
@@ -21,7 +23,11 @@ for forest in df['forest'].unique():
 
 df_clean = pd.concat(frames, ignore_index=True)
 
-df_clean.to_csv("Makueni_interpolated.csv", index=False)
+if not os.path.exists("Makueni_interpolated.csv"):
+    try:
+        df_clean.to_csv("Makueni_interpolated.csv", index=False)
+    except PermissionError:
+        logging.warning("Permission denied when writing Makueni_interpolated.csv")
 
 df_new = df_clean.copy()
 df_new.drop(columns=['interpolated_flag', '.geo', 'image_count', 'system:index', 'orbit','relative_orbit'],
@@ -58,20 +64,16 @@ def compute_s1_features(df):
 
 df_new = compute_s1_features(df_new)
 
-# Create monthly RFDI aggregation
 monthly_rfdi = df_new.groupby(['year', 'month']).agg({
     'RFDI': 'mean',
     'alert': 'sum'
 }).reset_index().sort_values(['year', 'month'])
 
-# For backward compatibility, alias as monthly_ndvi (though it's RFDI now)
 monthly_ndvi = monthly_rfdi.copy()
 
 @ndvi_bp.route("/api/s1/trend", methods=["GET"])
 def s1_trend():
-    # result = df_new.to_dict(orient="records")
-    # return jsonify(result)
-    forest_filter = request.args.get("forest")
+    forests_param = request.args.get("forests") or request.args.get("forest")  # support both for backward compatibility
     year_filter = request.args.get("year")
     month_filter = request.args.get("month")
     print("request.args:", request.args)
@@ -79,8 +81,16 @@ def s1_trend():
     df_filtered = df_new.copy()
     print("DataFrame length before filtering:", len(df_new))
 
-    if forest_filter:
-        df_filtered = df_filtered[df_filtered["forest"] == forest_filter]
+    selected_forests = None
+    if forests_param:
+        if "," in forests_param:
+            selected_forests = [f.strip() for f in forests_param.split(",") if f.strip()]
+            df_filtered = df_filtered[df_filtered["forest"].isin(selected_forests)]
+        else:
+            # single forest
+            df_filtered = df_filtered[df_filtered["forest"] == forests_param]
+            selected_forests = [forests_param]
+
     if year_filter:
         df_filtered = df_filtered[df_filtered["year"] == int(year_filter)]
     if month_filter:
@@ -88,8 +98,12 @@ def s1_trend():
 
     print("DataFrame length after filtering:", len(df_filtered))
 
-    # Aggregate by year and month, compute mean RFDI
-    df_aggregated = df_filtered.groupby(['year', 'month']).agg({'RFDI': 'mean'}).reset_index().sort_values(['year', 'month'])
+    if selected_forests and len(selected_forests) > 1:
+        # Multiple forests: aggregate by year, month, forest
+        df_aggregated = df_filtered.groupby(['year', 'month', 'forest']).agg({'RFDI': 'mean'}).reset_index().sort_values(['forest', 'year', 'month'])
+    else:
+        # Single forest or all: aggregate by year and month
+        df_aggregated = df_filtered.groupby(['year', 'month']).agg({'RFDI': 'mean'}).reset_index().sort_values(['year', 'month'])
 
     # Convert to JSON-ready dict
     result = df_aggregated.to_dict(orient="records")

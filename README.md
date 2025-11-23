@@ -1,21 +1,23 @@
 # Forest Tracker
 
-Forest Tracker is a comprehensive web application designed to monitor forest health, analyze environmental data, and support conservation efforts. The application integrates satellite imagery analysis, economic correlations, research summarization, and policy recommendations to provide actionable insights for forest management and protection.
+Forest Tracker is a specialized web application for monitoring forest degradation in Makueni County, Kenya, using Sentinel-1 satellite radar data. The system employs the Radar Forest Degradation Index (RFDI) to detect forest disturbances, with a threshold of 0.61 used to categorize areas as alerts indicating potential logging, encroachment, or other degradation activities.
 
 ## Overview
 
-The Forest Tracker application helps track forest conditions in regions like Makueni, Kenya, by processing satellite data to calculate vegetation health indicators. It offers tools for data analysis, correlation studies with economic factors, automated summarization of conservation research, and policy evaluation to guide decision-making for sustainable forest management.
+Makueni County, located in a semi-arid region of Kenya, contains eight key forests that face significant threats from human encroachment, illegal logging, and agricultural expansion. These areas are often neglected in national conservation efforts due to their arid conditions and remote locations. Forest Tracker addresses this gap by providing real-time monitoring of forest health across these eight forests, enabling community organizations and policymakers to take timely action against degradation.
+
+The application processes Sentinel-1 satellite data to compute RFDI values, tracks monthly trends, correlates forest health with economic indicators, and generates AI-powered policy recommendations tailored to the specific challenges faced by Makueni's forest ecosystems.
 
 ## Features
 
-- **Data Analysis**: Processes satellite bands to compute Normalized Difference Vegetation Index (NDVI) as a measure of forest health and biomass. Provides monthly and yearly trends to track changes over time.
-- **Correlations**: Analyzes relationships between forest health (NDVI) and economic indicators like GDP, using statistical methods including Pearson correlation and linear regression to quantify environmental-economic impacts.
-- **Summaries**: Uses AI-powered tools to extract and summarize key points from web articles on forest conservation, focusing on policy recommendations, environmental impacts, and region-specific insights.
-- **Policy Recommendations**: Evaluates forest policies and provides recommendations based on data analysis and research insights.
-- **Whistleblower Reports**: Allows anonymous submission of forest encroachment reports for community monitoring.
-- **Dashboard**: Interactive dashboard displaying forest health metrics, encroachment levels, and policy evaluation results.
-- **Authentication**: Secure login system with role-based access (user/admin) for protected resources.
-- **Research Resources**: Platform for managing and accessing conservation research materials.
+- **RFDI Analysis**: Processes Sentinel-1 satellite radar data (VV and VH polarizations) to compute the Radar Forest Degradation Index (RFDI). Uses a threshold of 0.61 to identify forest degradation alerts, providing monthly and yearly trends to track disturbances over time.
+- **Forest Health Monitoring**: Tracks the health of eight individual forests in Makueni County (Chyulu, Katende, Kibwezi, Kilungu, Kivale, Makuli, Mavindu, Mulooni) relative to county-wide degradation levels, enabling targeted conservation efforts.
+- **Correlations**: Analyzes relationships between forest degradation (RFDI alerts) and economic indicators like GDP, using statistical methods including Pearson correlation and linear regression to quantify environmental-economic impacts in semi-arid regions.
+- **Policy Evaluation**: Generates AI-powered policy recommendations specifically tailored to Makueni's forests, addressing threats like illegal logging, agricultural encroachment, and ecosystem degradation in arid environments.
+- **Whistleblower Reports**: Allows anonymous submission of forest encroachment reports for community-based monitoring of logging and land-use changes.
+- **Dashboard**: Interactive dashboard displaying RFDI trends, forest health scores, degradation alerts, and policy evaluation results for each of the eight Makueni forests.
+- **Authentication**: Secure login system with role-based access (researcher/admin) for protected resources and data analysis tools.
+- **Research Resources**: Platform for managing and accessing conservation research materials focused on semi-arid forest ecosystems.
 
 ## Installation
 
@@ -41,11 +43,12 @@ The Forest Tracker application helps track forest conditions in regions like Mak
    pip install -r requirements.txt
    ```
 
-4. Set up environment variables (optional):
-   Create a `.env` file in the root directory with:
-   ```
-   JWT_SECRET=your_secret_key_here
-   ```
+4. Set up environment variables:
+    Create a `.env` file in the root directory with:
+    ```
+    JWT_SECRET=your_secret_key_here
+    GEMINI_API_KEY=your_google_gemini_api_key_here
+    ```
 
 ### Frontend Setup (Express.js)
 
@@ -102,8 +105,8 @@ The Forest Tracker application helps track forest conditions in regions like Mak
 ├── requirements.txt                # Python dependencies
 ├── package.json                    # Node.js dependencies
 ├── .env                            # Environment variables
-├── analyis.py                      # NDVI calculation and trends
-├── correlation_analysis.py         # Statistical correlations (NDVI vs GDP)
+├── analysis.py                     # RFDI calculation and trends from Sentinel-1 data
+├── correlation_analysis.py         # Statistical correlations (RFDI alerts vs GDP)
 ├── summary.py                      # AI-powered article summarization
 ├── research.py                     # Research resources management
 ├── agent_docs.py                   # Policy evaluation agent
@@ -113,8 +116,10 @@ The Forest Tracker application helps track forest conditions in regions like Mak
 ├── whistle.py                      # Whistleblower report handling
 ├── extraction.ipynb                # Jupyter notebook for data extraction
 ├── whistleblower_reports.json      # Stored reports data
-├── makueni_bands.csv               # Satellite band data for Makueni
-├── Makueni-FOLAREP.pdf             # Research document
+├── SentinelMakueni.csv             # Sentinel-1 satellite data for Makueni forests
+├── Makueni_interpolated.csv        # Processed Sentinel-1 data with RFDI calculations
+├── tree_cover_loss_by_driver.csv   # Forest loss drivers data
+├── Makueni-FOLAREP.pdf             # Research document on Makueni forests
 ├── MakueniBill.pdf                 # Policy document
 ├── views/                          # EJS templates
 │   ├── landing.ejs                 # Home page
@@ -153,20 +158,22 @@ The Forest Tracker application helps track forest conditions in regions like Mak
 - `GET /api/whistle/reports` - Get all reports (authenticated)
 
 ### Data Analysis
-- `GET /api/ndvi/trend` - Get NDVI trend data
-- `GET /api/evaluate` - Run policy evaluation
+- `GET /api/ndvi/trend` - Get RFDI trend data for Sentinel-1 analysis
+- `GET /api/dashboard/forest-health` - Get forest health scores based on RFDI alerts
+- `GET /api/dashboard/filtered-data` - Get filtered Sentinel-1 data with RFDI alerts
+- `GET /api/evaluate` - Run AI-powered policy evaluation for Makueni forests
 
 ## Usage
 
-1. **Data Analysis**: The application automatically processes satellite data to compute NDVI values, providing insights into forest health trends.
+1. **RFDI Monitoring**: The application processes Sentinel-1 satellite data to compute RFDI values and identify degradation alerts above the 0.61 threshold, tracking monthly trends across Makueni's eight forests.
 
-2. **Correlation Studies**: Analyze how forest conditions correlate with economic indicators to understand the broader impacts of conservation efforts.
+2. **Forest Health Assessment**: Compare individual forest health scores against county-wide degradation levels to prioritize conservation efforts in the most threatened areas.
 
-3. **Research Summarization**: Input URLs of conservation articles to get AI-generated summaries focusing on key recommendations and insights.
+3. **Correlation Analysis**: Examine relationships between forest degradation alerts and economic indicators to quantify the socio-economic impacts of conservation in semi-arid regions.
 
-4. **Policy Evaluation**: Access policy recommendations based on data analysis and current forest conditions.
+4. **Policy Evaluation**: Generate AI-powered policy recommendations specifically addressing Makueni's challenges with illegal logging, agricultural encroachment, and ecosystem degradation in arid forest environments.
 
-5. **Community Reporting**: Submit anonymous reports of forest encroachment to contribute to monitoring efforts.
+5. **Community Monitoring**: Submit anonymous reports of forest encroachment and logging activities to support ground-level monitoring efforts in remote semi-arid areas.
 
 ## Contributing
 
@@ -184,7 +191,9 @@ ISC License
 
 ## Notes
 
+- The application focuses on Makueni County's eight forests: Chyulu, Katende, Kibwezi, Kilungu, Kivale, Makuli, Mavindu, and Mulooni, which face significant threats from logging and agricultural expansion in semi-arid conditions.
+- RFDI threshold of 0.61 is calibrated for Sentinel-1 data to detect forest degradation in arid environments; this may need adjustment based on local conditions.
 - The application uses in-memory storage for sessions and resources. For production, consider using databases like PostgreSQL or MongoDB.
-- API endpoints may require authentication; ensure proper JWT token handling.
-- The forest background animation enhances the user interface with an immersive theme.
-- Data analysis relies on satellite imagery; ensure data sources are updated regularly for accurate results.
+- API endpoints may require authentication; ensure proper JWT token handling and GEMINI_API_KEY configuration.
+- The forest background animation enhances the user interface with an immersive theme representing Makueni's ecosystems.
+- Sentinel-1 data processing relies on regular satellite imagery updates; ensure data sources are refreshed to maintain accuracy for real-time forest monitoring.

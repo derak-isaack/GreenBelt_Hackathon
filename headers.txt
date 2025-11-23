@@ -1,0 +1,11 @@
+HTTP/1.1 302 Found
+X-Powered-By: Express
+Set-Cookie: sessionId=session_1763916100783_dgy4j4on8; Max-Age=28800; Path=/; Expires=Mon, 24 Nov 2025 00:41:40 GMT; HttpOnly
+Location: /dashboard
+Vary: Accept
+Content-Type: text/plain; charset=utf-8
+Content-Length: 32
+Date: Sun, 23 Nov 2025 16:41:40 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+

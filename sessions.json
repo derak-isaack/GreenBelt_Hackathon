@@ -1,0 +1,17 @@
+{
+  "session_1763919693243_6a24hxi7y": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzYzOTQ4NDkzfQ.pJSPqYwZwzAbqvbkywrTlN52rSMteevepJbEL4Tfdg0",
+    "user": "admin",
+    "role": "admin"
+  },
+  "session_1763919784618_fsxzy43w1": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InJlc2VhcmNoZXIiLCJyb2xlIjoicmVzZWFyY2hlciIsImV4cCI6MTc2Mzk0ODU4NH0.lg8plh0YJmbp6SzNgAwPDGmQPYRmOvllwHWMyEZyYIo",
+    "user": "researcher",
+    "role": "researcher"
+  },
+  "session_1763922721071_mesismnu8": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InJlc2VhcmNoZXIiLCJyb2xlIjoicmVzZWFyY2hlciIsImV4cCI6MTc2Mzk1MTUyMX0.Mq9AmtympxzPR2RHphMcCE44Qpxn1XFV8lNEILYk4uc",
+    "user": "researcher",
+    "role": "researcher"
+  }
+}

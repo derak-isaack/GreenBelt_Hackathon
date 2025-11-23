@@ -131,7 +131,7 @@
 
       if (response.ok) {
         // Store token in localStorage
-        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('jwtToken', data.token);
         console.log('Login successful, token stored, redirecting to dashboard');
         // Redirect to dashboard
         window.location.href = '/dashboard';

@@ -4,6 +4,7 @@ import datetime
 import json
 import os
 import jwt
+import hashlib
 
 whistle_bp = Blueprint("whistleblower", __name__)
 
@@ -77,7 +78,7 @@ def submit_report():
 @whistle_bp.route("/reports", methods=["GET"])
 def get_reports():
     role = get_user_role()
-    if role != "admin":
+    if role is None or role != "admin":
         return jsonify({"error": "Unauthorized"}), 403
 
     if not os.path.exists(STORAGE_FILE):
@@ -104,7 +105,7 @@ def get_reports():
                 pass
 
         transformed_reports.append({
-            "id": report.get("id", str(uuid.uuid4())),
+            "id": hashlib.sha256(report.get("id", str(uuid.uuid4())).encode()).hexdigest(),
             "location": location,
             "incidentDetails": incident_details,
             "timestamp": timestamp_micros

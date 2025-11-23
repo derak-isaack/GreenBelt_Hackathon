@@ -2,7 +2,16 @@ const express = require('express');
 const path = require('path');
 const axios = require('axios');
 const cookieParser = require('cookie-parser');
+const http = require('http');
+const { URL } = require('url');
+const multer = require('multer');
+const FormData = require('form-data');
+const querystring = require('querystring');
+const fs = require('fs');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
+
+const JWT_SECRET = process.env.JWT_SECRET || 'CHANGE_THIS_SECRET';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,8 +27,33 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Configure multer for file uploads
+const upload = multer({ storage: multer.memoryStorage() });
+
 // Store for session (in production, use Redis or proper session store)
-let sessions = {};
+
+// Helper functions for session persistence
+function loadSessions() {
+  try {
+    if (fs.existsSync('sessions.json')) {
+      const data = fs.readFileSync('sessions.json', 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error('Error loading sessions:', error);
+  }
+  return {};
+}
+
+function saveSessions() {
+  try {
+    fs.writeFileSync('sessions.json', JSON.stringify(sessions, null, 2));
+  } catch (error) {
+    console.error('Error saving sessions:', error);
+  }
+}
+
+let sessions = loadSessions();
 
 // Helper function to make requests to Flask backend
 async function makeBackendRequest(method, endpoint, data = null, token = null) {
@@ -51,6 +85,34 @@ async function makeBackendRequest(method, endpoint, data = null, token = null) {
   }
 }
 
+// Proxy function to forward requests to Flask backend preserving multipart data
+function proxyToBackend(req, res, endpoint) {
+  const url = new URL(FLASK_BACKEND_URL);
+  const options = {
+    hostname: url.hostname,
+    port: url.port,
+    path: endpoint,
+    method: req.method,
+    headers: {
+      ...req.headers,
+      authorization: req.headers.authorization || (req.token ? `Bearer ${req.token}` : undefined),
+    },
+  };
+  delete options.headers.host;
+
+  const proxyReq = http.request(options, (proxyRes) => {
+    res.writeHead(proxyRes.statusCode, proxyRes.headers);
+    proxyRes.pipe(res);
+  });
+
+  proxyReq.on('error', (err) => {
+    console.error('Proxy error:', err);
+    res.status(500).json({ error: 'Proxy error' });
+  });
+
+  req.pipe(proxyReq);
+}
+
 // ===================
 // API Routes (Proxy to Flask)
 // ===================
@@ -73,6 +135,7 @@ app.post('/api/auth/login', async (req, res) => {
 
     const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     sessions[sessionId] = { token, user: req.body.username, role };
+    saveSessions();
 
     res.cookie('sessionId', sessionId, {
       httpOnly: true,
@@ -88,20 +151,44 @@ app.post('/api/auth/login', async (req, res) => {
 // Middleware to check authentication for API routes
 function checkAuth(req, res, next) {
   console.log(`checkAuth: ${req.method} ${req.path}, headers auth: ${!!req.headers.authorization}, cookie sessionId: ${!!req.cookies.sessionId}`);
-  // Check Authorization header (from localStorage token)
+  let token = null;
+
+  // Check Authorization header
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith('Bearer ')) {
-    req.token = authHeader.split(' ')[1];
-    console.log('checkAuth: using auth header token');
-    return next();
+    const value = authHeader.split(' ')[1];
+    console.log('checkAuth: auth header value:', value);
+    if (sessions[value]) {
+      // sessionId provided, retrieve JWT from sessions
+      token = sessions[value].token;
+      console.log('checkAuth: retrieved JWT from sessions for sessionId');
+    } else {
+      // assume it's the JWT directly
+      token = value;
+      console.log('checkAuth: using value as JWT');
+    }
   }
 
-  // Check session cookie (from server-side login)
-  const sessionId = req.cookies.sessionId;
-  if (sessionId && sessions[sessionId]) {
-    req.token = sessions[sessionId].token;
-    console.log('checkAuth: using session cookie token');
-    return next();
+  // If no token from header, check session cookie
+  if (!token) {
+    const sessionId = req.cookies.sessionId;
+    console.log('checkAuth: sessionId from cookie:', sessionId, 'exists in sessions:', !!sessions[sessionId]);
+    if (sessionId && sessions[sessionId]) {
+      token = sessions[sessionId].token;
+      console.log('checkAuth: retrieved JWT from sessions for cookie sessionId');
+    }
+  }
+
+  if (token) {
+    try {
+      jwt.verify(token, JWT_SECRET);
+      req.token = token;
+      console.log('checkAuth: req.token set to JWT');
+      return next();
+    } catch (err) {
+      console.log('checkAuth: JWT verification failed:', err.message);
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
   }
 
   console.log('checkAuth: no auth found, returning 401');
@@ -125,6 +212,18 @@ function requireAuth(req, res, next) {
   // If no session, redirect to login with redirect parameter
   const redirectUrl = req.originalUrl;
   res.redirect(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
+}
+
+// Middleware to check admin role
+function requireAdmin(req, res, next) {
+  console.log(`requireAdmin: ${req.method} ${req.path}, role: ${req.role}`);
+  if (req.role === 'admin') {
+    console.log('requireAdmin: admin access granted');
+    return next();
+  }
+
+  console.log('requireAdmin: access denied, redirecting to dashboard');
+  res.redirect('/dashboard');
 }
 
 // Research routes
@@ -174,7 +273,7 @@ app.post('/api/whistle/submit', async (req, res) => {
 // Dashboard routes
 app.get('/api/dashboard/policy-results', checkAuth, async (req, res) => {
   console.log('Dashboard policy-results request headers:', req.headers.authorization ? 'Auth header present' : 'No auth header');
-  const result = await makeBackendRequest('GET', '/dashboard/policy-results', null, req.token);
+  const result = await makeBackendRequest('GET', '/dashboard/policy-results?' + querystring.stringify(req.query), null, req.token);
   if (result.success) {
     res.json(result.data);
   } else {
@@ -194,34 +293,32 @@ app.post('/api/dashboard/ndvi/predict', checkAuth, async (req, res) => {
   }
 });
 
-app.get('/api/dashboard/data', checkAuth, async (req, res) => {
-  console.log('/api/dashboard/data: request received');
-  // Get policy results and transform to dashboard data format
-  const policyResult = await makeBackendRequest('GET', '/dashboard/policy-results', null, req.token);
-  console.log('/api/dashboard/data: policyResult success:', policyResult.success, 'status:', policyResult.status);
-
-  // Get reports for dashboard
-  const reportsResult = await makeBackendRequest('GET', '/whistle/reports', null, req.token).catch(() => ({ success: false, data: [] }));
-  console.log('/api/dashboard/data: reportsResult success:', reportsResult.success);
-
-  // Transform policy results to dashboard format
-  let dashboardData = [];
-  if (policyResult.success && policyResult.data.results) {
-    // Transform the policy evaluation results into dashboard format
-    // This is a placeholder - adjust based on actual policy_evaluation output structure
-    dashboardData = [{
-      forestHealth: 75,
-      encroachmentLevel: 25,
-      locationData: ['Forest Area 1', 'Forest Area 2'],
-    }];
+app.get('/api/dashboard/policy-pdf', checkAuth, async (req, res) => {
+  console.log('/api/dashboard/policy-pdf: request received');
+  const result = await makeBackendRequest('GET', '/dashboard/policy-pdf', null, req.token);
+  if (result.success) {
+    // For PDF downloads, we need to set appropriate headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="policy_recommendations.pdf"');
+    res.send(result.data);
+  } else {
+    console.log('Backend error for policy-pdf:', result.status, result.error);
+    res.status(result.status).json({ error: result.error });
   }
+});
+
+app.get('/api/dashboard/data', checkAuth, async (req, res) => {
+  console.log('/api/dashboard/data: request received, query params:', req.query);
+
+  // Initialize empty dashboard data
+  let dashboardData = [];
 
   console.log('/api/dashboard/data: returning dashboardData length:', dashboardData.length);
   res.json(dashboardData);
 });
 
 app.get('/api/s1/trend', async (req, res) => {
-  const result = await makeBackendRequest('GET', '/ndvi/api/s1/trend' + '?' + new URLSearchParams(req.query).toString());
+  const result = await makeBackendRequest('GET', '/ndvi/api/s1/trend' + '?' + querystring.stringify(req.query));
   if (result.success) {
     res.json(result.data);
   } else {
@@ -230,7 +327,7 @@ app.get('/api/s1/trend', async (req, res) => {
 });
 
 app.get('/filtered-data', async (req, res) => {
-  const result = await makeBackendRequest('GET', `/dashboard/filtered-data?${new URLSearchParams(req.query).toString()}`);
+  const result = await makeBackendRequest('GET', `/dashboard/filtered-data?${querystring.stringify(req.query)}`);
   if (result.success) {
     res.json(result.data);
   } else {
@@ -272,6 +369,40 @@ app.get('/api/whistle/reports', checkAuth, async (req, res) => {
   }
 });
 
+// Admin routes - handle file uploads with multer
+app.post('/api/admin/upload', checkAuth, upload.single('file'), async (req, res) => {
+  console.log('/api/admin/upload: processing upload');
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file provided' });
+  }
+
+  const form = new FormData();
+  form.append('file', req.file.buffer, {
+    filename: req.file.originalname,
+    contentType: req.file.mimetype,
+  });
+
+  try {
+    const response = await axios({
+      method: 'POST',
+      url: `${FLASK_BACKEND_URL}/admin/upload`,
+      headers: {
+        ...form.getHeaders(),
+        'Authorization': `Bearer ${req.token}`,
+      },
+      data: form,
+    });
+    res.json(response.data);
+  } catch (error) {
+    res.status(error.response?.status || 500).json({ error: error.response?.data?.error || error.message });
+  }
+});
+
+app.get('/api/admin/uploads', checkAuth, (req, res) => {
+  console.log('/api/admin/uploads: proxying request');
+  proxyToBackend(req, res, '/admin/uploads');
+});
+
 // Evaluate route
 app.get('/api/evaluate', async (req, res) => {
   const result = await makeBackendRequest('GET', '/evaluate');
@@ -306,11 +437,16 @@ app.post('/login', async (req, res) => {
     // Store token and role in session
     const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     sessions[sessionId] = { token: result.data.token, user: req.body.username, role: role };
+    saveSessions();
     res.cookie('sessionId', sessionId, { httpOnly: true, maxAge: 8 * 60 * 60 * 1000 }); // 8 hours
-    console.log('Login POST: session created, cookie set, redirecting to dashboard');
+    console.log('Login POST: session created, cookie set, redirecting based on role');
 
-    // Redirect to dashboard (same for all roles)
-    res.redirect('/dashboard');
+    // Redirect based on role
+    if (role === 'researcher') {
+      res.redirect('/resources');
+    } else {
+      res.redirect('/dashboard');
+    }
   } else {
     console.log('Login POST: backend login failed:', result.error);
     // Redirect back to login with error
@@ -330,13 +466,33 @@ app.get('/report', (req, res) => {
   res.render('report', { title: 'Forest Tracker - Report Encroachment', currentPath: '/report' });
 });
 
-app.get('/dashboard', requireAuth, (req, res) => {
-  res.render('dashboard', { title: 'Forest Tracker - Dashboard', currentPath: '/dashboard', role: req.role });
+app.get('/dashboard', (req, res) => {
+  let role = 'user'; // default
+  const sessionId = req.cookies.sessionId;
+  if (sessionId && sessions[sessionId]) {
+    role = sessions[sessionId].role;
+  }
+  res.render('dashboard', { title: 'Forest Tracker - Dashboard', currentPath: '/dashboard', role });
+});
+
+app.get('/admin', requireAuth, requireAdmin, (req, res) => {
+  res.render('admin', { title: 'Forest Tracker - Admin Portal', currentPath: '/admin', role: req.role });
 });
 
 app.get('/login', (req, res) => {
   const error = req.query.error;
   res.render('login', { title: 'Forest Tracker - Login', currentPath: '/login', error: error });
+});
+
+app.get('/api/dashboard/forest-health', checkAuth, async (req, res) => {
+  console.log('/api/dashboard/forest-health: request received, query params:', req.query);
+  const result = await makeBackendRequest('GET', '/dashboard/forest-health?' + querystring.stringify(req.query), null, req.token);
+  if (result.success) {
+    res.json(result.data);
+  } else {
+    console.log('Backend error for forest-health:', result.status, result.error);
+    res.status(result.status).json({ error: result.error });
+  }
 });
 
 // Start server
