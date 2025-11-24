@@ -14,16 +14,50 @@ Makueni County, located in a semi-arid region of Kenya, contains eight key fores
 
 The application processes `Sentinel-1 satellite data` to compute RFDI values, tracks weekly trends from 2015 to date, number of alerts above the threshold for every forest which are used to generate AI-powered policy advocacy recommendations tailored to the specific challenges faced by Makueni's forest ecosystems to enable biodiversity which is one of the major factors in `Environment performance Indicator`. 
 
-## Features
+## 🌲✨ Features
 
-- *RFDI Analysis*: Processes Sentinel-1 satellite radar data (VV and VH polarizations) to compute the `Radar Forest Degradation Index (RFDI)`. Uses a threshold of 0.61 to identify forest degradation alerts, providing monthly and yearly trends to track disturbances over time(Yearly and monthly filters).
-- *Forest Health Monitoring*: Tracks the health of eight individual forests in Makueni County (Chyulu, Katende, Kibwezi, Kilungu, Kivale, Makuli, Mavindu, Mulooni) relative to county-wide degradation levels, enabling targeted conservation efforts.
-- *Policy Evaluation*: Generates AI-powered policy recommendations specifically tailored to Makueni's forests, addressing threats like illegal logging, agricultural encroachment, and ecosystem degradation in arid environments. 
+### 📡 Advanced Radar-Based Monitoring  
+- **RFDI Analysis (Radar Forest Degradation Index)**  
+  Utilizes Sentinel-1 VV/VH radar data to compute RFDI values and detect degradation hotspots using a **0.61 threshold**.  
+  Offers **yearly and monthly visual trends**, helping users track both slow and rapid forest disturbances.
 
-The policy generated is dependent on:
-* The average forest health
-* Environment performance index
-* Frequency of alerts
+---
+
+### 🌿 Forest Health Intelligence  
+- **Forest Health Monitoring**  
+  Evaluates the condition of Makueni County’s eight forests —  
+  **Chyulu, Katende, Kibwezi, Kilungu, Kivale, Makuli, Mavindu, and Mulooni**.  
+  Each forest is benchmarked against county-wide averages to highlight areas needing urgent conservation.
+
+---
+
+### 🌍 Environmental Performance Index (EPI) Integration  
+- Computes a **per-forest Environmental Performance Index** combining:  
+  - Ecological stability  
+  - Degradation pressure  
+  - Vegetation condition metrics (RFDI, VV/VH ratio, RVI)  
+  This supports **prioritization of vulnerable ecosystems** in Makueni’s semi-arid ASAL landscape.
+
+---
+
+### 🚨 Smart Alert Frequency Tracking  
+- Monitors **monthly and yearly degradation alerts**, quantifying:  
+  - **Alert counts per forest**  
+  - **Severity trends**  
+  - Long-term disturbance pressure  
+  This helps identify forests experiencing persistent stress from logging, burning, or encroachment.
+
+---
+
+### 🤖 AI-Powered Policy Engine  
+- Generates **community-aligned, data-driven policy recommendations** using an intelligent AI agent.  
+- Policies are tailored to semi-arid conditions and informed by:  
+  - **Average forest health**  
+  - **Environmental Performance Index**  
+  - **Alert frequency & degradation intensity**  
+- Designed to support government agencies, community groups, and conservation partners in decision-making.
+
+---
 
 - **Whistleblower Reports**: Allows anonymous submission of forest encroachment reports for community-based monitoring of logging and land-use changes.
 - **Dashboard**: Interactive dashboard displaying RFDI trends, forest health scores, degradation alerts, and unique policy evaluation and reccomendation results for each of the eight Makueni forests.
