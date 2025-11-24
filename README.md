@@ -135,17 +135,51 @@ graph TD;
 ```
 
 
-## Usage
+## 🌿 Usage
 
-1. **RFDI Monitoring**: The application processes Sentinel-1 satellite data to compute RFDI values and identify degradation alerts above the 0.61 threshold, tracking monthly trends across Makueni's eight forests.
+1. **RFDI Monitoring**  
+   The system processes Sentinel-1 satellite data to compute the Radar Forest Degradation Index (RFDI), detect degradation alerts above the **0.61 threshold**, and track long-term monthly trends across Makueni’s eight forests. This enables continuous monitoring of disturbance patterns over time.
 
-2. **Forest Health Assessment**: Compare individual forest health scores against county-wide degradation levels to prioritize conservation efforts in the most threatened areas.
+2. **Forest Health & Environmental Performance Index (EPI)**  
+   Each selected forest is evaluated using a combined **Forest Health Score** and **Environmental Performance Index (EPI)**.  
+   These indices incorporate:
+   - RFDI values  
+   - Alert frequency and severity  
+   - VH/VV backscatter ratios  
+   - RVI (Radar Vegetation Index)  
+   - Multi-year degradation trends  
 
-3. **Correlation Analysis**: Examine relationships between forest degradation alerts and economic indicators to quantify the socio-economic impacts of conservation in semi-arid regions.
+   Together, they provide an objective measure of ecological health, enabling comparison across forests and identification of high-risk areas.
 
-4. **Policy Evaluation**: Generate AI-powered policy recommendations specifically addressing Makueni's challenges with illegal logging, agricultural encroachment, and ecosystem degradation in arid forest environments.
+3. **Alert Trend Analysis**  
+   Users can visualize the **monthly trend and total number of alerts exceeding the 0.61 threshold** for each forest.  
+   This highlights:
+   - Seasonal pressure cycles  
+   - Unusual increases in forest stress  
+   - Long-term encroachment or degradation patterns  
 
-5. **Community Monitoring**: Submit anonymous reports of forest encroachment and logging activities to support ground-level monitoring efforts in remote semi-arid areas.
+4. **Correlation & Impact Analysis**  
+   The platform enables analysis of relationships between forest degradation and socio-economic indicators.  
+   This helps quantify the broader impacts of forest health on:
+   - Local livelihoods  
+   - Water resources  
+   - Agricultural productivity  
+   - Environmental stability in semi-arid regions  
+
+5. **AI-Powered Policy Evaluation**  
+   An integrated AI agent combines EPI, forest health scores, RFDI trends, and alert counts to generate **forest-specific policy recommendations**.  
+   These recommendations address regional challenges such as:
+   - Illegal logging  
+   - Charcoal production  
+   - Agricultural encroachment  
+   - Broader ecosystem degradation  
+
+   This ensures policy advocacy is evidence-based and tailored to the selected forest.
+
+6. **Community-Driven Monitoring**  
+   Community members and forest associations can anonymously submit reports of forest encroachment or illegal activities.  
+   These reports flow to the admin dashboard and serve as **ground-level validation**, enhancing monitoring accuracy in remote or semi-arid forest zones.
+
 
 ## Contributing
 
