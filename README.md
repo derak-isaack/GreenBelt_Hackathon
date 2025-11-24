@@ -180,26 +180,18 @@ graph TD;
    Community members and forest associations can anonymously submit reports of forest encroachment or illegal activities.  
    These reports flow to the admin dashboard and serve as **ground-level validation**, enhancing monitoring accuracy in remote or semi-arid forest zones.
 
-
-## Contributing
-
-To contribute to Forest Tracker:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## License
-
-ISC License
-
 ## Notes
 
-- The application focuses on Makueni County's eight forests: Chyulu, Katende, Kibwezi, Kilungu, Kivale, Makuli, Mavindu, and Mulooni, which face significant threats from logging and agricultural expansion in semi-arid conditions.
-- RFDI threshold of 0.61 is calibrated for Sentinel-1 data to detect forest degradation in arid environments; this may need adjustment based on local conditions.
-- The application uses in-memory storage for sessions and resources. For production, consider using databases like PostgreSQL or MongoDB.
-- API endpoints may require authentication; ensure proper JWT token handling and GEMINI_API_KEY configuration.
-- The forest background animation enhances the user interface with an immersive theme representing Makueni's ecosystems.
-- Sentinel-1 data processing relies on regular satellite imagery updates; ensure data sources are refreshed to maintain accuracy for real-time forest monitoring.
+- **Makueni County is used as the pilot area** because it is officially categorized as an **ASAL (Arid and Semi-Arid Lands) county**, making it highly vulnerable to drought stress, forest degradation, and climate-driven ecosystem changes. Its semi-arid conditions provide an ideal testing environment for evaluating forest health tools in water-scarce regions.
+
+- The application focuses on **eight forests in Makueni County**: Chyulu, Katende, Kibwezi, Kilungu, Kivale, Makuli, Mavindu, and Mulooni — all of which face significant threats from logging, charcoal production, and agricultural encroachment in semi-arid environments.
+
+- The **RFDI threshold of 0.61** is calibrated for Sentinel-1 radar data to detect forest degradation in arid and semi-arid ecosystems. Users may adjust this threshold depending on local vegetation structure and historical forest performance.
+
+- The system currently uses **in-memory storage** for session data and generated resources. For production deployment, consider migrating to a persistent database such as **PostgreSQL, MongoDB, or Firebase**.
+
+- Some **API endpoints require authentication**. Ensure correct JWT handling and proper configuration of environment variables such as `GEMINI_API_KEY`.
+
+- A custom **forest background animation** enhances the user interface by visually reflecting the semi-arid ecosystems characteristic of Makueni County.
+
+- Accurate results depend on **timely updates of Sentinel-1 satellite imagery**. Ensure that data sources are regularly refreshed to maintain reliability for real-time forest monitoring and alert generation.
