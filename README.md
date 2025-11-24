@@ -16,9 +16,9 @@ The application processes `Sentinel-1 satellite data` to compute RFDI values, tr
 
 ## Features
 
-- `**RFDI Analysis**`: Processes Sentinel-1 satellite radar data (VV and VH polarizations) to compute the `Radar Forest Degradation Index (RFDI)`. Uses a threshold of 0.61 to identify forest degradation alerts, providing monthly and yearly trends to track disturbances over time(Yearly and monthly filters).
-- `**Forest Health Monitoring**`: Tracks the health of eight individual forests in Makueni County (Chyulu, Katende, Kibwezi, Kilungu, Kivale, Makuli, Mavindu, Mulooni) relative to county-wide degradation levels, enabling targeted conservation efforts.
-- **Policy Evaluation**: Generates AI-powered policy recommendations specifically tailored to Makueni's forests, addressing threats like illegal logging, agricultural encroachment, and ecosystem degradation in arid environments. 
+- *RFDI Analysis*: Processes Sentinel-1 satellite radar data (VV and VH polarizations) to compute the `Radar Forest Degradation Index (RFDI)`. Uses a threshold of 0.61 to identify forest degradation alerts, providing monthly and yearly trends to track disturbances over time(Yearly and monthly filters).
+- *Forest Health Monitoring*: Tracks the health of eight individual forests in Makueni County (Chyulu, Katende, Kibwezi, Kilungu, Kivale, Makuli, Mavindu, Mulooni) relative to county-wide degradation levels, enabling targeted conservation efforts.
+- *Policy Evaluation*: Generates AI-powered policy recommendations specifically tailored to Makueni's forests, addressing threats like illegal logging, agricultural encroachment, and ecosystem degradation in arid environments. 
 
 The policy generated is dependent on:
 * The average forest health
@@ -100,51 +100,39 @@ The policy generated is dependent on:
 - `GET /api/dashboard/filtered-data` - Get filtered Sentinel-1 data with RFDI alerts
 - `GET /api/evaluate` - Run AI-powered policy evaluation for Makueni forests
 
-Flowchart diagram
+## Workflow Diagram
 
-    %% Users
-    A[Whistleblower\nAnonymous User] -->|Submit Report| RPOST(/api/whistle/submit)
-    B[Normal User\nCommunity Forest Groups] -->|Visit Dashboard| DASHGET(/api/dashboard/data)
-    B -->|Select Forest| SF[Forest Selected\n(Drives Analysis)]
-    C[Admin User] -->|Login| AUTHPOST(/api/auth/login)
-
-    %% Whistleblower Flow
-    RPOST --> RSTORE[Reports Stored in DB]
-    RSTORE --> RGET(/api/whistle/reports)
-    RGET --> ADASH[Admin Dashboard\nView Reports Count]
-
-    %% Admin Panel
-    C --> ADMINPANEL[Admin Panel]
-    ADMINPANEL -->|Upload Research Files| RESPOST(/api/research/resources)
-    ADMINPANEL -->|View Reports| RGET
-
-    %% Research Flow
-    RESPOST --> RESSTORE[Research Resources DB]
-    RESSTORE --> RESGET(/api/research/resources)
-    RESGET --> RESEARCHERS[Researchers Access\nUploaded Resources]
-
-    %% Dashboard User Flow
-    SF --> HEALTHGET(/api/dashboard/forest-health)
-    SF --> FILTERED(/api/dashboard/filtered-data)
-    SF --> RFDIGET(/api/ndvi/trend)
-    SF --> EPI[EPI Calculation\n(From RFDI + Alerts)]
-    SF --> POLICY(/api/evaluate)
-
-    %% Dashboard Visualization
-    DASHGET --> AVG[Average Forest Health]
-    DASHGET --> EPI
-    DASHGET --> ALERTS[Alerts > 0.61\nCount]
-    RFDIGET --> TREND[RFDI Trend\n2015 - Present]
-
-    %% AI Agent
-    AVG --> AI[AI Policy Agent]
-    EPI --> AI
-    TREND --> AI
-    ALERTS --> AI
-
-    %% Policy Output
-    AI --> POLICYRES(/api/dashboard/policy-results)
-    POLICYRES --> COMMUNITY[Community-Specific Policy\nRecommendations]
+```mermaid
+graph TD;
+    A["Whistleblower\nAnonymous User"] -->|Submit Report| D["POST /api/whistle/submit"]
+    B["Normal User\nCommunity Forest Groups"] -->|Visit Dashboard| E["GET /api/dashboard/data"]
+    B -->|Select Forest| F["Forest Selected\n(Drives Analysis)"]
+    C["Admin User"] -->|Login| G["POST /api/auth/login"]
+    G --> K["Admin Panel"]
+    D --> H["Reports Stored in DB"]
+    H --> I["GET /api/whistle/reports"]
+    I --> J["Admin Dashboard\nView Reports Count"]
+    K -->|Upload Research Files| L["POST /api/research/resources"]
+    K -->|View Reports| I
+    L --> M["Research Resources DB"]
+    M --> N["GET /api/research/resources"]
+    N --> O["Researchers Access\nUploaded Resources"]
+    F --> P["GET /api/dashboard/forest-health"]
+    F --> Q["GET /api/dashboard/filtered-data"]
+    F --> R["GET /api/ndvi/trend"]
+    F --> S["EPI Calculation\n(From RFDI + Alerts)"]
+    F --> T["POST /api/evaluate"]
+    E --> U["Average Forest Health"]
+    E --> S
+    E --> V["Alerts > 0.61\nCount"]
+    R --> W["RFDI Trend\n2015 - Present"]
+    U --> X["AI Policy Agent"]
+    S --> X
+    W --> X
+    V --> X
+    X --> Y["GET /api/dashboard/policy-results"]
+    Y --> Z["Community-Specific Policy\nRecommendations"]
+```
 
 
 ## Usage
