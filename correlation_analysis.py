@@ -2,7 +2,7 @@ import pandas as pd
 import requests
 import numpy as np
 from scipy.stats import pearsonr
-# import matplotlib.pyplot as plt  # Commented out to avoid dependency
+# import matplotlib.pyplot as plt
 import statsmodels.api as sm
 
 def load_ndvi_data(filepath):

@@ -249,7 +249,7 @@
 
   // Auth check
   (function() {
-    const authToken = localStorage.getItem('authToken');
+    const authToken = localStorage.getItem('jwtToken');
     const isLoginPage = window.location.pathname === '/login';
     console.log('Admin auth check: authToken present:', !!authToken);
 

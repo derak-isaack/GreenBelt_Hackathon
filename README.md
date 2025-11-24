@@ -1,21 +1,32 @@
 # Forest Tracker
 
-Forest Tracker is a specialized web application for monitoring forest degradation in Makueni County, Kenya, using Sentinel-1 satellite radar data. The system employs the Radar Forest Degradation Index (RFDI) to detect forest disturbances, with a threshold of 0.61 used to categorize areas as alerts indicating potential logging, encroachment, or other degradation activities.
+Forest Tracker is a specialized web application for monitoring `forest degradation` in Makueni County, Kenya, using Sentinel-1 satellite radar data. The system uses the:
+
+* `Radar Forest Degradation Index (RFDI)` feature to detect forest disturbances, with a threshold of 0.61 used to categorize areas as alerts-labelled 1 indicating potential logging, encroachment, or other degradation activities.
+* `Environment perfomance index` KPI to enable policy recommendations. 
+* `Average forest health` KPI to track the forest health relative to the forests in Makueni 
+
+All these KPIs are used to recommend necessary policies for the selected forest. 
 
 ## Overview
 
-Makueni County, located in a semi-arid region of Kenya, contains eight key forests that face significant threats from human encroachment, illegal logging, and agricultural expansion. These areas are often neglected in national conservation efforts due to their arid conditions and remote locations. Forest Tracker addresses this gap by providing real-time monitoring of forest health across these eight forests, enabling community organizations and policymakers to take timely action against degradation.
+Makueni County, located in a semi-arid region of Kenya, contains eight key forests that face significant threats from human encroachment, illegal logging, and agricultural expansion. These areas are often neglected in national conservation efforts due to their arid conditions and remote locations. Forest Tracker addresses this gap by providing real-time monitoring of forest health across these eight forests, enabling community organizations, associations, and policymakers to take timely action against degradation.
 
-The application processes Sentinel-1 satellite data to compute RFDI values, tracks monthly trends, correlates forest health with economic indicators, and generates AI-powered policy recommendations tailored to the specific challenges faced by Makueni's forest ecosystems.
+The application processes `Sentinel-1 satellite data` to compute RFDI values, tracks weekly trends from 2015 to date, number of alerts above the threshold for every forest which are used to generate AI-powered policy advocacy recommendations tailored to the specific challenges faced by Makueni's forest ecosystems to enable biodiversity which is one of the major factors in `Environment performance Indicator`. 
 
 ## Features
 
-- **RFDI Analysis**: Processes Sentinel-1 satellite radar data (VV and VH polarizations) to compute the Radar Forest Degradation Index (RFDI). Uses a threshold of 0.61 to identify forest degradation alerts, providing monthly and yearly trends to track disturbances over time.
-- **Forest Health Monitoring**: Tracks the health of eight individual forests in Makueni County (Chyulu, Katende, Kibwezi, Kilungu, Kivale, Makuli, Mavindu, Mulooni) relative to county-wide degradation levels, enabling targeted conservation efforts.
-- **Correlations**: Analyzes relationships between forest degradation (RFDI alerts) and economic indicators like GDP, using statistical methods including Pearson correlation and linear regression to quantify environmental-economic impacts in semi-arid regions.
-- **Policy Evaluation**: Generates AI-powered policy recommendations specifically tailored to Makueni's forests, addressing threats like illegal logging, agricultural encroachment, and ecosystem degradation in arid environments.
+- `**RFDI Analysis**`: Processes Sentinel-1 satellite radar data (VV and VH polarizations) to compute the `Radar Forest Degradation Index (RFDI)`. Uses a threshold of 0.61 to identify forest degradation alerts, providing monthly and yearly trends to track disturbances over time(Yearly and monthly filters).
+- `**Forest Health Monitoring**`: Tracks the health of eight individual forests in Makueni County (Chyulu, Katende, Kibwezi, Kilungu, Kivale, Makuli, Mavindu, Mulooni) relative to county-wide degradation levels, enabling targeted conservation efforts.
+- **Policy Evaluation**: Generates AI-powered policy recommendations specifically tailored to Makueni's forests, addressing threats like illegal logging, agricultural encroachment, and ecosystem degradation in arid environments. 
+
+The policy generated is dependent on:
+* The average forest health
+* Environment performance index
+* Frequency of alerts
+
 - **Whistleblower Reports**: Allows anonymous submission of forest encroachment reports for community-based monitoring of logging and land-use changes.
-- **Dashboard**: Interactive dashboard displaying RFDI trends, forest health scores, degradation alerts, and policy evaluation results for each of the eight Makueni forests.
+- **Dashboard**: Interactive dashboard displaying RFDI trends, forest health scores, degradation alerts, and unique policy evaluation and reccomendation results for each of the eight Makueni forests.
 - **Authentication**: Secure login system with role-based access (researcher/admin) for protected resources and data analysis tools.
 - **Research Resources**: Platform for managing and accessing conservation research materials focused on semi-arid forest ecosystems.
 
@@ -64,80 +75,6 @@ The application processes Sentinel-1 satellite data to compute RFDI values, trac
    FLASK_BACKEND_URL=http://localhost:5000
    ```
 
-## Running the Application
-
-### Start the Backend
-
-1. Activate the virtual environment:
-   ```bash
-   makueni\Scripts\activate
-   ```
-
-2. Run the Flask server:
-   ```bash
-   python app.py
-   ```
-
-   The backend will start on `http://localhost:5000`.
-
-### Start the Frontend
-
-1. Run the Express server:
-   ```bash
-   npm run dev
-   ```
-
-   The frontend will start on `http://localhost:3000`.
-
-### Access the Application
-
-- Open your browser and navigate to `http://localhost:3000`
-- Use the login page to access authenticated features
-- The dashboard provides an overview of forest health data
-- Submit reports anonymously or access research resources
-
-## Project Structure
-
-```
-.
-├── app.py                          # Main Flask application
-├── server.js                       # Express.js frontend server
-├── requirements.txt                # Python dependencies
-├── package.json                    # Node.js dependencies
-├── .env                            # Environment variables
-├── analysis.py                     # RFDI calculation and trends from Sentinel-1 data
-├── correlation_analysis.py         # Statistical correlations (RFDI alerts vs GDP)
-├── summary.py                      # AI-powered article summarization
-├── research.py                     # Research resources management
-├── agent_docs.py                   # Policy evaluation agent
-├── dashboard.py                    # Dashboard data endpoints
-├── register.py                     # User authentication
-├── passwords.py                    # Password utilities
-├── whistle.py                      # Whistleblower report handling
-├── extraction.ipynb                # Jupyter notebook for data extraction
-├── whistleblower_reports.json      # Stored reports data
-├── SentinelMakueni.csv             # Sentinel-1 satellite data for Makueni forests
-├── Makueni_interpolated.csv        # Processed Sentinel-1 data with RFDI calculations
-├── tree_cover_loss_by_driver.csv   # Forest loss drivers data
-├── Makueni-FOLAREP.pdf             # Research document on Makueni forests
-├── MakueniBill.pdf                 # Policy document
-├── views/                          # EJS templates
-│   ├── landing.ejs                 # Home page
-│   ├── login.ejs                   # Login page
-│   ├── dashboard.ejs               # Analytics dashboard
-│   ├── report.ejs                  # Report submission form
-│   ├── resources.ejs               # Research resources page
-│   └── partials/                   # Reusable template components
-│       ├── header.ejs              # Navigation header
-│       └── footer.ejs              # Footer
-├── public/                         # Static assets
-│   ├── css/
-│   │   └── styles.css              # Main stylesheet
-│   └── js/
-│       └── forest-background.js    # Animated forest background
-└── README.md
-```
-
 ## API Endpoints
 
 ### Authentication
@@ -162,6 +99,53 @@ The application processes Sentinel-1 satellite data to compute RFDI values, trac
 - `GET /api/dashboard/forest-health` - Get forest health scores based on RFDI alerts
 - `GET /api/dashboard/filtered-data` - Get filtered Sentinel-1 data with RFDI alerts
 - `GET /api/evaluate` - Run AI-powered policy evaluation for Makueni forests
+
+Flowchart diagram
+
+    %% Users
+    A[Whistleblower\nAnonymous User] -->|Submit Report| RPOST(/api/whistle/submit)
+    B[Normal User\nCommunity Forest Groups] -->|Visit Dashboard| DASHGET(/api/dashboard/data)
+    B -->|Select Forest| SF[Forest Selected\n(Drives Analysis)]
+    C[Admin User] -->|Login| AUTHPOST(/api/auth/login)
+
+    %% Whistleblower Flow
+    RPOST --> RSTORE[Reports Stored in DB]
+    RSTORE --> RGET(/api/whistle/reports)
+    RGET --> ADASH[Admin Dashboard\nView Reports Count]
+
+    %% Admin Panel
+    C --> ADMINPANEL[Admin Panel]
+    ADMINPANEL -->|Upload Research Files| RESPOST(/api/research/resources)
+    ADMINPANEL -->|View Reports| RGET
+
+    %% Research Flow
+    RESPOST --> RESSTORE[Research Resources DB]
+    RESSTORE --> RESGET(/api/research/resources)
+    RESGET --> RESEARCHERS[Researchers Access\nUploaded Resources]
+
+    %% Dashboard User Flow
+    SF --> HEALTHGET(/api/dashboard/forest-health)
+    SF --> FILTERED(/api/dashboard/filtered-data)
+    SF --> RFDIGET(/api/ndvi/trend)
+    SF --> EPI[EPI Calculation\n(From RFDI + Alerts)]
+    SF --> POLICY(/api/evaluate)
+
+    %% Dashboard Visualization
+    DASHGET --> AVG[Average Forest Health]
+    DASHGET --> EPI
+    DASHGET --> ALERTS[Alerts > 0.61\nCount]
+    RFDIGET --> TREND[RFDI Trend\n2015 - Present]
+
+    %% AI Agent
+    AVG --> AI[AI Policy Agent]
+    EPI --> AI
+    TREND --> AI
+    ALERTS --> AI
+
+    %% Policy Output
+    AI --> POLICYRES(/api/dashboard/policy-results)
+    POLICYRES --> COMMUNITY[Community-Specific Policy\nRecommendations]
+
 
 ## Usage
 

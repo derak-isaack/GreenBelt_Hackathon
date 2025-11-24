@@ -317,8 +317,28 @@ app.get('/api/dashboard/data', checkAuth, async (req, res) => {
   res.json(dashboardData);
 });
 
+app.get('/dashboard/forest-health', checkAuth, async (req, res) => {
+  console.log('/dashboard/forest-health: request received, query params:', req.query);
+  const result = await makeBackendRequest('GET', '/dashboard/forest-health?' + querystring.stringify(req.query), null, req.token);
+  if (result.success) {
+    res.json(result.data);
+  } else {
+    console.log('Backend error for forest-health:', result.status, result.error);
+    res.status(result.status).json({ error: result.error });
+  }
+});
+
 app.get('/api/s1/trend', async (req, res) => {
   const result = await makeBackendRequest('GET', '/ndvi/api/s1/trend' + '?' + querystring.stringify(req.query));
+  if (result.success) {
+    res.json(result.data);
+  } else {
+    res.status(result.status).json({ error: result.error });
+  }
+});
+
+app.get('/ndvi/api/s1/epi', async (req, res) => {
+  const result = await makeBackendRequest('GET', '/ndvi/api/s1/epi?' + querystring.stringify(req.query));
   if (result.success) {
     res.json(result.data);
   } else {

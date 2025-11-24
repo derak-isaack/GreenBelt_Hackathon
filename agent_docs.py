@@ -4,7 +4,7 @@ import asyncio
 import pandas as pd
 from textwrap import shorten
 from google import genai
-from analysis import df_new, monthly_ndvi
+from analysis import df_new, monthly_ndvi, compute_environmental_index
 
 MAX_CONTEXT_CHARS = 50_000
 
@@ -49,6 +49,19 @@ def build_combined_context(df, monthly_ndvi, drivers_df) -> str:
     except Exception as e:
         parts.append(f"<ERROR_SERIALIZING_RFDI: {e}>")
 
+    # ==== ENVIRONMENTAL PERFORMANCE INDEX ====
+    try:
+        epi_df = compute_environmental_index(df)
+        epi_monthly = epi_df.groupby(['year', 'month']).agg({'EPI': 'mean'}).reset_index().sort_values(['year', 'month'])
+        epi_csv = epi_monthly.to_csv(index=False)
+        parts.append("\n=== ENVIRONMENTAL PERFORMANCE INDEX (EPI) TRENDS ===")
+        parts.append("EPI is a composite metric (0-100) combining RFDI, RVI, VH/VV ratio, and alert data.")
+        parts.append("Higher EPI values indicate better environmental performance.")
+        parts.append("Monthly EPI values:")
+        parts.append(epi_csv)
+    except Exception as e:
+        parts.append(f"<ERROR_COMPUTING_EPI: {e}>")
+
     # ==== FOREST LOSS DRIVERS ====
     parts.append("\n=== FOREST LOSS DRIVERS DATA (CSV) ===")
     parts.append(f"Columns: {', '.join(list(drivers_df.columns))}")
@@ -92,6 +105,7 @@ async def policy_evaluation(forest=None):
     task_text = (
     "You are an environmental policy analyst. Using the following data sources:\n"
     "- Sentinel-1 satellite-based RVI/RFDI/VV/VH vegetation condition trends for a semi-arid area\n"
+    "- Environmental Performance Index (EPI) trends: a composite metric (0-100) combining RFDI, RVI, VH/VV ratio, and alert data\n"
     "- A CSV showing forest loss drivers, loss year, loss area (ha), and gross carbon emissions (Mg)\n\n"
     "Prepare a clear, concise, and professional policy advocacy report for community Forest organizations. The report should be "
     "manager-friendly, free of technical jargon, and easy to read.\n\n"
@@ -99,14 +113,14 @@ async def policy_evaluation(forest=None):
     "Your tasks:\n"
     "1. Identify the main drivers of forest loss, grouped by year.\n"
     "2. Summarize the total forest area lost and total carbon emissions caused by each driver.\n"
-    "3. Interpret how these drivers are reflected in RFDI trends, with emphasis on forest health.\n"
+    "3. Interpret how these drivers are reflected in RFDI trends and EPI scores, with emphasis on forest health.\n"
     "4. Provide a simple narrative describing how activities such as logging, permanent agriculture, "
-    "and other pressures weaken forest ecosystems.\n"
+    "and other pressures weaken forest ecosystems and lower EPI scores.\n"
     "5. Identify which drivers create the largest environmental impact on community forests.\n"
     "6. Present a clear table with:\n"
     "     - Forest Loss Driver\n"
     "     - Evidence from CSV (loss area and carbon emissions)\n"
-    "     - Observed RVI/RFDI/VV/VH Pattern\n"
+    "     - Observed RVI/RFDI/VV/VH Pattern and EPI Impact\n"
     "     - Environmental Impact Summary\n"
     "     - Policy Actions Needed\n"
     "7. Provide actionable, practical policy recommendations aimed at RESTORING and STRENGTHENING community forests. "
@@ -122,12 +136,12 @@ async def policy_evaluation(forest=None):
     "     - Fire and invasive-species management\n"
     "9. Provide community-level recommendations that local leaders can easily implement.\n"
     "10. Use clear and accessible language suitable for senior managers and policymakers.\n"
-    "11. Explain (in simple terms) how addressing key forest loss drivers will improve RFDI and RVI signals "
-    "and lead to healthier forest ecosystems.\n\n"
+    "11. Explain (in simple terms) how addressing key forest loss drivers will improve RFDI, RVI signals, and EPI scores "
+    "to lead to healthier forest ecosystems.\n\n"
     "Avoid unnecessary technical language. Avoid fabricated or speculative details. Keep all observations "
-    "grounded in the provided CSV data and RVI/VV/VH/RFDI trends.\n\n"
+    "grounded in the provided CSV data, RVI/VV/VH/RFDI trends, and EPI scores.\n\n"
     f"=== ANALYSIS CONTEXT ===\n{data_context}"
-) 
+)
 
 
 

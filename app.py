@@ -8,6 +8,10 @@ from dashboard import dashboard_bp
 from admin import admin_bp
 from flask_cors import CORS
 from analysis import ndvi_bp
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 # app = Flask()
 app = Flask(__name__)

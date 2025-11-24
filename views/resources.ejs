@@ -37,9 +37,9 @@
   <script>
     // Check authentication on page load
     (function() {
-      const authToken = localStorage.getItem('authToken');
+      const authToken = localStorage.getItem('jwtToken');
       const sessionId = document.cookie.split('; ').find(row => row.startsWith('sessionId='));
-      
+
       if (!authToken && !sessionId) {
         // No authentication, redirect to login
         const currentPath = window.location.pathname;
@@ -50,11 +50,11 @@
 
     async function loadResources() {
       try {
-        const authToken = localStorage.getItem('authToken');
+        const authToken = localStorage.getItem('jwtToken');
         const headers = {
           'Content-Type': 'application/json',
         };
-        
+
         if (authToken) {
           headers['Authorization'] = 'Bearer ' + authToken;
         }

@@ -13,5 +13,35 @@
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InJlc2VhcmNoZXIiLCJyb2xlIjoicmVzZWFyY2hlciIsImV4cCI6MTc2Mzk1MTUyMX0.Mq9AmtympxzPR2RHphMcCE44Qpxn1XFV8lNEILYk4uc",
     "user": "researcher",
     "role": "researcher"
+  },
+  "session_1763927035594_kl1atrwcz": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzYzOTU1ODM1fQ.YO8zgNAJQ_4RxIwhpz2riB0oRWxsc4Ssat4h1j5UMpU",
+    "user": "admin",
+    "role": "admin"
+  },
+  "session_1763927057173_ji2t90qo1": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzYzOTU1ODU3fQ.PKr2S3yUiQ9_CBm4YK0Un1n0zvikoKx22E4SjYDnkvc",
+    "user": "admin",
+    "role": "admin"
+  },
+  "session_1763927135484_8jh5h4a7d": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzYzOTU1OTM1fQ.XE-nrEtOb7ilCLyFe_alt3wQrJYQakArwFWClCvHKqs",
+    "user": "admin",
+    "role": "admin"
+  },
+  "session_1763927816078_6shkvp4oq": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzYzOTU2NjE2fQ.qAVObs0LSzcz4N7RXNhewWCyZpht8u7Gl4IwF_Mix7U",
+    "user": "admin",
+    "role": "admin"
+  },
+  "session_1763928376826_tq619or9w": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzYzOTU3MTc2fQ.BrslbPnrFC4nLnLNPofgUlHYMrGPOS6b1LhWgh19zAU",
+    "user": "admin",
+    "role": "admin"
+  },
+  "session_1763928631754_1rvz6a705": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzYzOTU3NDMxfQ.n-JjBUWGGbQiiCzM_Hhc3vSpyaqXndC_Zl0PsfJhF10",
+    "user": "admin",
+    "role": "admin"
   }
 }

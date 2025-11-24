@@ -108,3 +108,67 @@ def s1_trend():
     # Convert to JSON-ready dict
     result = df_aggregated.to_dict(orient="records")
     return jsonify(result)
+
+
+def normalize(series):
+    """Normalize any numeric Pandas series to 0–100 scale."""
+    if series.max() == series.min():
+        return series * 0  # Avoid divide-by-zero
+    return 100 * (series - series.min()) / (series.max() - series.min())
+
+
+def compute_environmental_index(df):
+    """
+    Compute Environmental Performance Index (EPI) using:
+    - RFDI (inverse: lower = healthier)
+    - RVI (higher = healthier)
+    - VH/VV ratio (moderate values = vegetation structure)
+    - VV_lin and VH_lin (optional structural backscatter indicators)
+    """
+
+    temp = df.copy()
+
+    temp["RFDI_norm"] = 100 - normalize(temp["RFDI"])      
+    temp["RVI_norm"] = normalize(temp["RVI"])
+    temp["VH_VV_norm"] = normalize(temp["VH_VV_ratio"])
+    temp["VV_norm"] = normalize(temp["VV_lin"])
+    temp["VH_norm"] = normalize(temp["VH_lin"])
+    temp["Alert_norm"] = 100 - normalize(temp["alert"])    
+
+    # EPI = mean score across indicators
+    temp["EPI"] = temp[
+        ["RFDI_norm", "RVI_norm", "VH_VV_norm", "VV_norm", "VH_norm", "Alert_norm"]
+    ].mean(axis=1)
+
+    return temp
+
+
+@ndvi_bp.route("/api/s1/epi", methods=["GET"])
+def epi_index():
+    """
+    Returns Environmental Performance Index aggregated by:
+    - forest (optional)
+    - year (optional)
+    - month (optional)
+    """
+
+    forests_param = request.args.get("forest")
+    year_filter = request.args.get("year")
+    month_filter = request.args.get("month")
+
+    df_epi = compute_environmental_index(df_new)
+
+    if forests_param:
+        df_epi = df_epi[df_epi["forest"] == forests_param]
+
+    if year_filter:
+        df_epi = df_epi[df_epi["year"] == int(year_filter)]
+
+    if month_filter:
+        df_epi = df_epi[df_epi["month"] == int(month_filter)]
+
+    df_agg = df_epi.groupby(["year", "month"]).agg({
+        "EPI": "mean"
+    }).reset_index().sort_values(["year", "month"])
+
+    return jsonify(df_agg.to_dict(orient="records"))

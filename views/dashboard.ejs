@@ -22,18 +22,10 @@
 
       <!-- Summary Cards -->
       <div class="grid md:grid-cols-3 gap-6 mb-8">
-        <% if (role === 'admin') { %>
         <div class="stat-card">
-          <p class="card-description mb-2">Total Reports</p>
-          <div class="stat-value" id="totalReports">-</div>
-          <div class="stat-label">Anonymous submissions received</div>
-        </div>
-        <% } %>
-
-        <div class="stat-card">
-          <p class="card-description mb-2">Monitored Areas</p>
-          <div class="stat-value" id="monitoredAreas">-</div>
-          <div class="stat-label">Active monitoring locations</div>
+          <p class="card-description mb-2">Environmental Performance Index</p>
+          <div class="stat-value" id="epiScore">-</div>
+          <div class="stat-label">Composite environmental health metric</div>
         </div>
 
         <div class="stat-card">
@@ -41,7 +33,29 @@
           <div class="stat-value" id="avgHealth">-</div>
           <div class="stat-label">Overall ecosystem health score</div>
         </div>
+
+        <div class="stat-card">
+          <p class="card-description mb-2">Alerts Above RFDI Threshold</p>
+          <div class="stat-value" id="alertsCount">-</div>
+          <div class="stat-label">Number of alerts exceeding threshold</div>
+        </div>
       </div>
+
+      <% if (role === 'admin') { %>
+      <div class="grid md:grid-cols-2 gap-6 mb-8">
+        <div class="stat-card">
+          <p class="card-description mb-2">Total Reports</p>
+          <div class="stat-value" id="totalReports">-</div>
+          <div class="stat-label">Anonymous submissions received</div>
+        </div>
+
+        <div class="stat-card">
+          <p class="card-description mb-2">Monitored Areas</p>
+          <div class="stat-value" id="monitoredAreas">-</div>
+          <div class="stat-label">Active monitoring locations</div>
+        </div>
+      </div>
+      <% } %>
       <!-- Filters and Alerts -->
       <div class="grid md:grid-cols-2 gap-6 mb-8">
         <!-- Filter Card -->
@@ -198,7 +212,22 @@
       const allForests = [...new Set(data.map(d => d.forest))];
       monitoredCount = allForests.length;
     }
-    document.getElementById('monitoredAreas').textContent = monitoredCount;
+    const monitoredAreasEl = document.getElementById('monitoredAreas');
+    if (monitoredAreasEl) monitoredAreasEl.textContent = monitoredCount;
+
+    // Update alerts count
+    try {
+      const year = yearFilter.value;
+      const month = monthFilter.value;
+      const forests = selectedForests.length > 0 ? selectedForests.join(',') : '';
+      const params = { year, forests, month };
+      const response = await fetch(`/filtered-data?${new URLSearchParams(params)}`);
+      const result = await response.json();
+      document.getElementById('alertsCount').textContent = result.alert_count || 0;
+    } catch (error) {
+      console.error('Error loading alerts count:', error);
+      document.getElementById('alertsCount').textContent = 'N/A';
+    }
 
     // Update forest health from RFDI data
     try {
@@ -214,6 +243,29 @@
     } catch (error) {
       console.error('Error loading forest health:', error);
       document.getElementById('avgHealth').textContent = 'N/A';
+    }
+
+    // Update EPI score
+    try {
+      const year = yearFilter.value;
+      const month = monthFilter.value;
+      const forests = selectedForests.length > 0 ? selectedForests.join(',') : '';
+      const epiParams = { year, month };
+      if (forests) epiParams.forest = forests; // EPI endpoint uses 'forest' not 'forests'
+      const epiResponse = await fetch(`/ndvi/api/s1/epi?${new URLSearchParams(epiParams)}`);
+      if (!epiResponse.ok) {
+        throw new Error(`HTTP ${epiResponse.status}`);
+      }
+      const epiData = await epiResponse.json();
+      if (epiData.length > 0) {
+        const latestEpi = epiData[epiData.length - 1]; // Get most recent EPI
+        document.getElementById('epiScore').textContent = `${latestEpi.EPI ? latestEpi.EPI.toFixed(1) : 0}`;
+      } else {
+        document.getElementById('epiScore').textContent = 'N/A';
+      }
+    } catch (error) {
+      console.error('Error loading EPI:', error);
+      document.getElementById('epiScore').textContent = 'N/A';
     }
   }
 
@@ -714,7 +766,6 @@
     try {
       const response = await fetch(`/filtered-data?${new URLSearchParams(params)}`);
       const result = await response.json();
-      alertsCount.textContent = result.alert_count || 0;
 
       // Populate filters only on initial load (no filters selected)
       if (!year && !forests && !month) {

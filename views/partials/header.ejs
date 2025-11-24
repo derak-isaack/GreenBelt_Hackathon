@@ -99,18 +99,18 @@
     }
 
     // Check if user is logged in first
-    const authToken = localStorage.getItem('authToken');
+    const authToken = localStorage.getItem('jwtToken');
     const username = localStorage.getItem('username');
-    
+
     // Login button handlers - redirect to login page or logout
     const handleLogin = (e) => {
       e.preventDefault();
       e.stopPropagation();
-      
+
       if (authToken) {
         // User is logged in, show logout confirmation
         if (confirm('Do you want to log out?')) {
-          localStorage.removeItem('authToken');
+          localStorage.removeItem('jwtToken');
           localStorage.removeItem('username');
           localStorage.removeItem('rememberMe');
           window.location.reload();
@@ -127,7 +127,7 @@
       const icon = loginBtn.querySelector('svg') ? loginBtn.querySelector('svg').outerHTML : '';
       loginBtn.innerHTML = icon + (username || 'Account');
     }
-    
+
     if (authToken && mobileLoginBtn) {
       const icon = mobileLoginBtn.querySelector('svg') ? mobileLoginBtn.querySelector('svg').outerHTML : '';
       mobileLoginBtn.innerHTML = icon + (username || 'Account');

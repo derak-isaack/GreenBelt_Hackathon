@@ -3,3 +3,6 @@ frontend/
 .env
 node_modules/
 test.py
+cookies_admin.txt
+cookies_researcher.txt
+cookies.txt
